@@ -268,6 +268,25 @@ new_round_resets_ball_speed :: proc(t: ^testing.T) {
 }
 
 @(test)
+fast_ball_does_not_pass_through_small_paddle :: proc(t: ^testing.T) {
+	for hz in ([]f32{60, 10}) { // also at a low simulation rate
+		g := game_make(1)
+		game_update(&g, {pressed = {.Confirm}}, 1.0 / hz)
+		game_set_tuning(&g, {ball_speed = BALL_MAX_SPEED, ball_size = BALL_SIZE_MIN, player_size = PLAYER_SIZE_MIN})
+		// Ball well to the left of the paddle, flying straight at it.
+		g.ball.pos = g.player.pos - {60, 0}
+		g.ball.vel = {BALL_MAX_SPEED, 0}
+		// 0.15 s: 60 units to the paddle, then 90 back (not far enough to
+		// reach the left wall and return).
+		for _ in 0 ..< int(0.15 * hz) {
+			game_update(&g, {}, 1.0 / hz)
+		}
+		testing.expectf(t, g.paddle_hits == 1, "%v Hz: paddle_hits = %v", hz, g.paddle_hits)
+		testing.expectf(t, g.ball.vel.x < 0, "%v Hz: ball passed through", hz)
+	}
+}
+
+@(test)
 paddle_pushing_a_departing_ball_is_not_a_hit :: proc(t: ^testing.T) {
 	g := game_make(1)
 	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
@@ -285,7 +304,7 @@ paddle_pushing_a_departing_ball_is_not_a_hit :: proc(t: ^testing.T) {
 @(test)
 tuning_is_clamped_and_applied_now :: proc(t: ^testing.T) {
 	g := game_make(1)
-	game_set_tuning(&g, {ball_speed = 1000, ball_size = 0, player_size = 30})
+	game_set_tuning(&g, {ball_speed = 5000, ball_size = 0, player_size = 30})
 	testing.expect_value(t, g.tuning, Tuning{BALL_MAX_SPEED, BALL_SIZE_MIN, 30})
 	testing.expect_value(t, g.ball.size, BALL_SIZE_MIN)
 	testing.expect_value(t, g.player.size, 30)

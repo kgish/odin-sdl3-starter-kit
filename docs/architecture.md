@@ -82,8 +82,9 @@ The example has a `Menu` → `Playing` ⇄ `Paused` state machine, a player squa
 ball reflects off the world edges and off the paddle; for the paddle it is
 pushed out along the axis of least overlap, and only counts as a hit when it
 was moving towards the paddle. Each paddle hit makes the ball 10 % faster, up
-to a cap that keeps it from passing through the paddle in a single step, and a
-new round resets its speed. The package has no
+to 1000 units/s, and a new round resets its speed. The ball moves in
+sub-steps short enough that even the smallest ball cannot pass through the
+smallest paddle between collision checks, at any speed or simulation rate. The package has no
 SDL import, so it can be unit-tested and replaced freely.
 
 ## Threads

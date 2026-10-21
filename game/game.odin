@@ -2,6 +2,7 @@
 // real game; keep the boundary: plain values in, plain values out.
 package game
 
+import "core:math"
 import "core:math/linalg"
 import "core:math/rand"
 
@@ -12,19 +13,21 @@ PLAYER_SIZE  :: 12
 PLAYER_SPEED :: 120 // world units per second
 BALL_SIZE    :: 6
 BALL_SPEED   :: 90  // at the start of each round
-// Each paddle hit multiplies the ball's speed, up to a cap. The cap keeps the
-// per-step movement (240/60 = 4 units) well below the ball + paddle overlap
-// span, so the ball cannot skip through the paddle in one step.
+// Each paddle hit multiplies the ball's speed, up to BALL_MAX_SPEED.
 BALL_SPEEDUP   :: 1.1
-BALL_MAX_SPEED :: 240
+BALL_MAX_SPEED :: 1000
 
-// Ranges accepted by game_set_tuning. With the smallest ball and paddle the
-// overlap span is (2 + 4) units, still more than BALL_MAX_SPEED moves per step.
+// Ranges accepted by game_set_tuning.
 BALL_MIN_SPEED  :: 20
 BALL_SIZE_MIN   :: 2
 BALL_SIZE_MAX   :: 24
 PLAYER_SIZE_MIN :: 4
 PLAYER_SIZE_MAX :: 48
+
+// The ball moves in sub-steps of at most this distance, half the smallest
+// ball + paddle overlap span, so it cannot pass through the paddle between
+// collision checks at any speed or simulation rate.
+BALL_MAX_SUBSTEP :: f32(BALL_SIZE_MIN + PLAYER_SIZE_MIN) / 2
 
 // Adjustable parameters (the tuning panel edits these).
 Tuning :: struct {
@@ -152,15 +155,19 @@ game_update :: proc(g: ^Game, input: Step_Input, dt: f32) {
 	g.player.pos += dir * PLAYER_SPEED * dt
 	clamp_to_world(&g.player)
 
-	g.ball.pos += g.ball.vel * dt
-	if bounce_in_world(&g.ball) {
-		g.bounces += 1
-	}
-	if bounce_off_body(&g.ball, g.player) {
-		g.paddle_hits += 1
-		g.ball.vel = speed_up(g.ball.vel)
-		// The paddle may have pushed the ball against a wall.
-		clamp_to_world(&g.ball)
+	substeps := max(1, int(math.ceil(linalg.length(g.ball.vel) * dt / BALL_MAX_SUBSTEP)))
+	sub_dt := dt / f32(substeps)
+	for _ in 0 ..< substeps {
+		g.ball.pos += g.ball.vel * sub_dt
+		if bounce_in_world(&g.ball) {
+			g.bounces += 1
+		}
+		if bounce_off_body(&g.ball, g.player) {
+			g.paddle_hits += 1
+			g.ball.vel = speed_up(g.ball.vel)
+			// The paddle may have pushed the ball against a wall.
+			clamp_to_world(&g.ball)
+		}
 	}
 }
 
