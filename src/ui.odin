@@ -109,8 +109,8 @@ ui_handle_event :: proc(ui: ^Ui, event: ^sdl.Event) {
 }
 
 // Builds the tuning panel for this frame. Edits are applied to the game at
-// once, between simulation steps.
-ui_update :: proc(ui: ^Ui, g: ^game.Game) {
+// once, between simulation steps, and to the background before it advances.
+ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 	if !ui.visible {
 		return
 	}
@@ -118,7 +118,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game) {
 	mu.begin(ctx)
 	defer mu.end(ctx)
 
-	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 196}, {.NO_CLOSE}) {
+	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 222}, {.NO_CLOSE}) {
 		return
 	}
 	defer mu.end_window(ctx)
@@ -133,6 +133,9 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game) {
 	mu.label(ctx, "Paddle size")
 	if .CHANGE in mu.slider(ctx, &t.player_size, game.PLAYER_SIZE_MIN, game.PLAYER_SIZE_MAX, 1, "%.0f") do changed = true
 
+	mu.label(ctx, "Scroll speed")
+	mu.slider(ctx, &bg.speed, 0, BACKGROUND_SCROLL_MAX, 1, "%.0f")
+
 	mu.label(ctx, "Current speed")
 	mu.label(ctx, fmt.tprintf("%.0f (x%.2f per paddle hit)", game.game_ball_speed(g^), game.BALL_SPEEDUP))
 	mu.layout_row(ctx, {-1})
@@ -141,6 +144,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game) {
 	if .SUBMIT in mu.button(ctx, "Defaults") {
 		t = game.TUNING_DEFAULT
 		changed = true
+		bg.speed = BACKGROUND_SCROLL_SPEED
 	}
 	mu.label(ctx, "F1: hide panel")
 

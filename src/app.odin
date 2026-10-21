@@ -25,8 +25,7 @@ App_State :: struct {
 	ui:        Ui,
 	score_font: Baked_Font, // Jersey 10
 	menu_font:  Baked_Font, // Silkscreen
-	// Optional: nil when the image is missing; render then uses the clear color.
-	background: ^sdl.Texture,
+	background: Background,
 	// Game hit counters already answered with a sound.
 	bounces_heard:     u64,
 	paddle_hits_heard: u64,
@@ -115,7 +114,8 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	if !os.is_dir(state.asset_dir) {
 		log.warnf("asset directory not found: %s", state.asset_dir)
 	}
-	state.background = background_load(state.renderer, state.asset_dir)
+	state.background = background_make()
+	background_load(&state.background, state.renderer, state.asset_dir)
 	state.game = game.game_make(cfg.seed)
 	state.timestep = game.timestep_make(cfg.sim_hz, i64(cfg.max_elapsed_ms) * 1_000_000, cfg.max_updates)
 	if injected_failure(state, .Game) do return .FAILURE
@@ -143,7 +143,8 @@ app_iterate :: proc(state: ^App_State) -> sdl.AppResult {
 	} else {
 		now := sdl.GetTicksNS()
 		ui_count_frame(&state.ui, now)
-		ui_update(&state.ui, &state.game)
+		ui_update(&state.ui, &state.game, &state.background)
+		background_advance(&state.background, now)
 		steps := game.timestep_advance(&state.timestep, now)
 		dt := game.timestep_dt(state.timestep)
 		for _ in 0 ..< steps {

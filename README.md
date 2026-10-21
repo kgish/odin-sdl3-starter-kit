@@ -67,8 +67,9 @@ rendering and sound:
   ball 10 % faster, up to 1000 units/s (from 90 at the start of a round).
 - The play field is 320×180 world units, letterboxed and scaled to the window.
 - The **tuning panel** (F1, or start with `--tuning`) has sliders for the
-  ball's launch speed, the ball size and the paddle size. Changes apply
-  immediately and carry over to new rounds. It is drawn with Odin's built-in
+  ball's launch speed, the ball size, the paddle size and the background's
+  scroll speed (0 stops it). Changes apply immediately and carry over to new
+  rounds. It is drawn with Odin's built-in
   [`vendor:microui`](https://pkg.odin-lang.org/vendor/microui/), so it adds no
   native dependency; see `src/ui.odin`.
 - Sound is optional. If no audio device opens, the game runs silently;
