@@ -4,7 +4,7 @@
 
 Build a small, understandable, reusable game starter template in Odin using SDL3's application callback architecture. Target Windows, Linux, and macOS desktop first. Use current stable libraries, explicit resource ownership, reproducible builds, and meaningful automated tests. Keep the example easy to delete or replace when starting a game.
 
-This document is an implementation specification and contributor guide. At its creation, the workspace contained no starter implementation. Commands and layouts below describe the intended project; they are not evidence that builds or tests have passed.
+This document is an implementation specification and contributor guide. Milestones 1–4 are implemented; see `README.md` and `docs/`. Optional SDL_image/SDL_ttf/GPU examples are not. Statements here are requirements, not evidence that builds or tests pass; verify with the scripts.
 
 ## Required decisions
 
@@ -38,7 +38,7 @@ These values are a dated research baseline. On implementation or an explicit dep
 
 Keep a dependency lock manifest containing release tag, resolved commit, source URL, archive SHA-256, target architecture, build options, enabled codecs/backends, and relevant transitive dependency versions. Resolve “latest” during dependency updates, then build exact locked inputs. Ordinary builds must not fetch moving branch heads or unexpectedly upgrade dependencies.
 
-Odin vendor bindings ship with the compiler; they do not necessarily expose every API in a newly released native library. Verify the actual pinned binding declarations against the selected SDL release. If an API is missing, prefer a compatible newer Odin release or a small documented local binding extension. Do not modify the user's global Odin installation. Never assume the Windows native binaries shipped with Odin are the newest SDL release.
+Odin vendor bindings ship with the compiler; they do not necessarily expose every API in a newly released native library. Verify the actual pinned binding declarations against the selected SDL release. If an API is missing, prefer a compatible newer Odin release or a small documented local binding extension. Do not modify the user's global Odin installation. Never assume the Windows native binaries shipped with Odin are the newest SDL release. Pinned `dev-2026-10` bindings declare SDL 3.4.2 headers; its Windows distribution bundles `vendor/sdl3/SDL3.lib`/`SDL3.dll`, which `foreign import "SDL3.lib"` links by path. `scripts/bootstrap.ps1` replaces them in the project-local Odin copy only.
 
 ## Dependency inventory
 
@@ -107,7 +107,7 @@ Odin exposes `RunApp` and `EnterAppMainCallbacks`; their existence alone does no
 
 Use C calling conventions for all procedures called by SDL. Explicitly establish a valid Odin `context` at each foreign callback boundary; preserve persistent application allocator/logger configuration through a clear adapter strategy. Do not assume a foreign caller provides Odin's implicit context.
 
-Allocate persistent `App_State` in memory that outlives `AppInit` and pass it through `appstate`. Never pass the address of a returning stack local. Return `.Continue`, `.Success`, or `.Failure` using the actual pinned Odin enum names. Preserve useful diagnostics and propagate process exit status.
+Allocate persistent `App_State` in memory that outlives `AppInit` and pass it through `appstate`. Never pass the address of a returning stack local. Return `.CONTINUE`, `.SUCCESS`, or `.FAILURE` (the pinned `sdl.AppResult` names). Preserve useful diagnostics and propagate process exit status.
 
 SDL pumps events. Do not call `PollEvent`, `PumpEvents`, or build a blocking loop inside callbacks. SDL event pointers are borrowed; copy required data, including pointed-to payload data according to its ownership rules, before retaining it.
 

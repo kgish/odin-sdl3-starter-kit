@@ -68,3 +68,6 @@ Testing/
 .cache/
 
 .idea
+# Starter kit outputs and fetched dependencies
+third_party/
+dist/
