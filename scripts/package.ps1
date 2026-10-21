@@ -1,5 +1,6 @@
-# Builds a relocatable release into dist/windows-<arch>/ and checks that it
-# launches from another directory using the bundled SDL3.dll.
+# Builds relocatable releases into dist/windows-<arch>/ (the starter, plus each
+# optional example whose libraries are installed) and checks that they launch
+# from another directory using the bundled DLLs.
 #
 # Usage: scripts/package.ps1
 . "$PSScriptRoot/common.ps1"
@@ -9,31 +10,57 @@ Assert-Sdl
 
 $dist = Join-Path $Root "dist/$Target"
 if (Test-Path $dist) { Remove-Item -Recurse -Force $dist }
-New-Item -ItemType Directory -Force -Path (Join-Path $dist 'licenses') | Out-Null
+$licenses = Join-Path $dist 'licenses'
+New-Item -ItemType Directory -Force -Path $licenses | Out-Null
 
-Write-Step 'building release'
-$exe = Join-Path $dist 'starter.exe'
-Invoke-Native $Odin @('build', (Join-Path $Root 'src'), '-vet', '-strict-style', '-o:speed', '-subsystem:windows', "-out:$exe")
+function Build-App([string]$Name, [string]$Src) {
+    Write-Step "building $Name (release)"
+    Invoke-Native $Odin @('build', $Src, '-vet', '-strict-style', '-o:speed', '-subsystem:windows', "-out:$(Join-Path $dist "$Name.exe")")
+}
 
+# Copies every license file a package installed (licenses/<dir>/*) into dist.
+function Copy-Licenses([string[]]$Dirs) {
+    foreach ($dir in $Dirs) {
+        foreach ($file in Get-ChildItem (Join-Path $Prefix "licenses/$dir") -File) {
+            Copy-Item $file.FullName (Join-Path $licenses "$dir-$($file.Name)")
+        }
+    }
+}
+
+$apps = @('starter')
+Build-App 'starter' (Join-Path $Root 'src')
+Copy-Licenses @('SDL3')
+if (Test-Feature 'image') {
+    $apps += 'images'
+    Build-App 'images' (Join-Path $Root 'examples/images')
+    Copy-Licenses @('SDL3_image')
+}
+if (Test-Feature 'text') {
+    $apps += 'text'
+    Build-App 'text' (Join-Path $Root 'examples/text')
+    Copy-Licenses @('SDL3_ttf', 'freetype')
+    Copy-Item (Join-Path $Root 'assets/fonts/OFL.txt') (Join-Path $licenses 'PressStart2P-OFL.txt')
+}
 Copy-SdlRuntime $dist
 Copy-Item -Recurse (Join-Path $Root 'assets') (Join-Path $dist 'assets')
-Copy-Item (Join-Path $Root 'LICENSE') (Join-Path $dist 'licenses/LICENSE.starter.txt')
-Copy-Item (Join-Path $Prefix 'licenses/SDL3/LICENSE.txt') (Join-Path $dist 'licenses/LICENSE.SDL3.txt')
+Copy-Item (Join-Path $Root 'LICENSE') (Join-Path $licenses 'starter-LICENSE.txt')
 Remove-Item (Join-Path $dist '*.pdb') -ErrorAction SilentlyContinue
 
-Write-Step 'launch check'
 $check = Join-Path ([IO.Path]::GetTempPath()) ([Guid]::NewGuid())
 New-Item -ItemType Directory -Path $check | Out-Null
 try {
-    $log = Join-Path $check 'launch.log'
     $env:SDL_VIDEO_DRIVER = 'dummy'; $env:SDL_RENDER_DRIVER = 'software'; $env:SDL_AUDIO_DRIVER = 'dummy'
-    # A windows-subsystem exe has no console; capture its output explicitly.
-    $p = Start-Process -FilePath $exe -ArgumentList '--frames=10' -WorkingDirectory $check `
-        -RedirectStandardOutput $log -RedirectStandardError "$log.err" -NoNewWindow -Wait -PassThru
-    $text = (Get-Content $log -Raw) + (Get-Content "$log.err" -Raw)
-    if ($p.ExitCode -ne 0) { Write-Host $text; throw "packaged app failed with exit code $($p.ExitCode)" }
-    if ($text -notmatch "SDL runtime $([regex]::Escape($Lock.sdl3.version))") { Write-Host $text; throw 'packaged app did not load the locked SDL3' }
+    foreach ($app in $apps) {
+        Write-Step "launch check: $app"
+        $log = Join-Path $check "$app.log"
+        # A windows-subsystem exe has no console; capture its output explicitly.
+        $p = Start-Process -FilePath (Join-Path $dist "$app.exe") -ArgumentList '--frames=10' -WorkingDirectory $check `
+            -RedirectStandardOutput $log -RedirectStandardError "$log.err" -NoNewWindow -Wait -PassThru
+        $text = (Get-Content $log -Raw) + (Get-Content "$log.err" -Raw)
+        if ($p.ExitCode -ne 0) { Write-Host $text; throw "packaged $app failed with exit code $($p.ExitCode)" }
+        if ($text -notmatch "SDL.* $([regex]::Escape($Lock.sdl3.version))") { Write-Host $text; throw "packaged $app did not load the locked SDL3" }
+    }
 } finally {
     Remove-Item -Recurse -Force $check
 }
-Write-Step "packaged $dist"
+Write-Step "packaged $($apps -join ', ') in $dist"

@@ -61,6 +61,18 @@ require_sdl() {
 	[[ -d "$PREFIX/lib" ]] || die "locked SDL3 not found in $PREFIX; run scripts/bootstrap.sh"
 }
 
+# has_feature <image|text>: true if bootstrap installed every package of the feature.
+has_feature() {
+	local key
+	while read -r key; do
+		[[ -f "$PREFIX/.lock-$key" ]] || return 1
+	done < <(lock_get "d['features']['$1']['packages']")
+}
+
+require_feature() {
+	has_feature "$1" || die "optional feature '$1' not installed; run scripts/bootstrap.sh --with-$1"
+}
+
 # Linker flags that point the Odin build at the project-local SDL3.
 # Dev builds embed an absolute rpath; package.sh rewrites it to a relative one.
 sdl_link_flags() {

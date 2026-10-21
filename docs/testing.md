@@ -41,7 +41,32 @@ Every case also checks that `app_quit` ran once. Debug builds also fail the
 case if Odin's tracking allocator reports a leak or bad free; the app exits
 with code 3 when that happens.
 
-Logs are kept in `build/integration-logs/<debug|release>/<case>.log`.
+Logs are kept in `build/integration-logs/<app>-<debug|release>/<case>.log`.
+
+## Optional examples
+
+`test.*` also runs a suite (`--suite=images` or `--suite=text`) against each
+example whose feature is installed, in debug and release. Examples whose
+feature is missing are skipped with a hint. `--require-features` /
+`-RequireFeatures` turns a skip into a failure; CI uses it.
+
+| Case | Expectation |
+| --- | --- |
+| `smoke` | 30 frames, exit 0. The image or font loads, and every owned resource (texture, or text engine and font, then renderer and window) is destroyed exactly once |
+| `screenshot` | `--screenshot=FILE.bmp` saves the final frame |
+| `missing-assets` | Exit 1 with a "failed to load" diagnostic. The renderer and window are still cleaned up; nothing that was never created is destroyed |
+| `bad-option` | Exit 1, nothing created |
+
+The screenshots (`build/integration-logs/<app>-<mode>/<app>.bmp`) are rendered
+by the software renderer and kept for inspection; they are not compared
+against reference images.
+
+## Feature isolation
+
+After building the baseline starter, `test.*` checks its dynamic dependencies
+(`ldd`, `otool -L` or `dumpbin /dependents`) and fails if it links SDL3_image
+or SDL3_ttf. Bootstrap separately checks that each optional library links none
+of the codec or shaping libraries the lock excludes (`must_not_link`).
 
 Dummy drivers prove lifecycle behaviour only. They prove nothing about
 hardware acceleration, visible output, or real devices.

@@ -11,6 +11,7 @@ dependencies.
 
 ```sh
 scripts/bootstrap.sh --with-odin   # locked Odin + SDL3 into third_party/
+                                   #   add --with-image, --with-text or --all-features for the examples
 scripts/build.sh debug             # build/starter-debug
 build/starter-debug                # Enter: play, P: pause, arrows/WASD: move, Esc: quit
 scripts/test.sh                    # unit + headless lifecycle tests
@@ -25,7 +26,7 @@ commit; the scripts check.
 From a Visual Studio **developer PowerShell 7** prompt:
 
 ```powershell
-scripts/bootstrap.ps1
+scripts/bootstrap.ps1              # -WithImage, -WithText or -AllFeatures for the examples
 scripts/build.ps1 debug
 build/starter-debug.exe
 scripts/test.ps1
@@ -38,9 +39,12 @@ scripts/package.ps1
 | --- | --- |
 | `src/` | Executable: startup adapter, SDL callbacks, app lifecycle, input mapping, rendering, config |
 | `game/` | SDL-independent simulation: input transitions, fixed timestep, state machine, example game |
+| `examples/images/` | Optional: PNG loading with SDL3_image ([below](#optional-examples)) |
+| `examples/text/` | Optional: TrueType text with SDL3_ttf |
+| `assets/` | Example font and sprite, with [provenance and licenses](assets/README.md) |
 | `tests/integration/` | Runs the real executable headlessly through success, quit and failure paths |
 | `scripts/` | Bootstrap, build, test, package and dependency-update scripts (`.sh` and `.ps1`) |
-| `deps.lock.json` | Exact Odin and SDL3 versions, commits, checksums and build options |
+| `deps.lock.json` | Exact Odin, SDL3 and optional-library versions, commits, checksums and build options |
 | `docs/` | [Architecture](docs/architecture.md), [dependencies](docs/dependencies.md), [testing](docs/testing.md) |
 
 ## Starting a game
@@ -48,6 +52,24 @@ scripts/package.ps1
 Replace `game/game.odin` (and its tests) with your own simulation. Keep it free
 of SDL: feed it `Step_Input` and a fixed `dt`, render from its state in
 `src/render.odin`, and add key bindings in `src/input.odin`.
+
+## Optional examples
+
+Two independent executables show the optional libraries. Each is a single
+self-contained file with its own copy of the startup adapter, so you can copy
+one into your game or delete it without touching `src/`. The baseline starter
+never links SDL3_image or SDL3_ttf; `scripts/test.*` checks this.
+
+| Example | Needs | Build | Shows |
+| --- | --- | --- | --- |
+| `examples/images` | `bootstrap --with-image` | `scripts/build.sh debug images` | `IMG_LoadTexture`, pixel-art scaling, rotation |
+| `examples/text` | `bootstrap --with-text` | `scripts/build.sh debug text` | `TTF_OpenFont`, the renderer text engine, updating text each frame |
+
+Both accept `--frames=N`, `--assets=DIR` and `--screenshot=FILE.bmp`. The last
+one saves the final frame of a `--frames` run. SDL3_image is built with only
+BMP, JPEG, PNG and QOI support. SDL3_ttf is built with FreeType but without
+HarfBuzz, so complex scripts are not shaped. See
+[dependencies](docs/dependencies.md#optional-libraries).
 
 ## Command-line options
 
@@ -63,5 +85,6 @@ of SDL: feed it `Step_Input` and a fixed `dt`, render from its state in
 
 ## License
 
-MIT; see [LICENSE](LICENSE). SDL3 is under the zlib license; its license text is
-shipped in `dist/*/licenses/`.
+MIT; see [LICENSE](LICENSE). SDL3, SDL3_image and SDL3_ttf are under the zlib
+license, FreeType under the FreeType License, and the example font under the
+SIL OFL 1.1. Their license texts are shipped in `dist/*/licenses/`.

@@ -4,7 +4,7 @@
 
 Build a small, understandable, reusable game starter template in Odin using SDL3's application callback architecture. Target Windows, Linux, and macOS desktop first. Use current stable libraries, explicit resource ownership, reproducible builds, and meaningful automated tests. Keep the example easy to delete or replace when starting a game.
 
-This document is an implementation specification and contributor guide. Milestones 1–4 are implemented; see `README.md` and `docs/`. Optional SDL_image/SDL_ttf/GPU examples are not. Statements here are requirements, not evidence that builds or tests pass; verify with the scripts.
+This document is an implementation specification and contributor guide. Milestones 1–5 are implemented, including the optional SDL_image and SDL_ttf examples; see `README.md` and `docs/`. The optional GPU example is not. Statements here are requirements, not evidence that builds or tests pass; verify with the scripts.
 
 ## Required decisions
 

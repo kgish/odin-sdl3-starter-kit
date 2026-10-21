@@ -23,7 +23,9 @@
         "url": "https://github.com/odin-lang/Odin/releases/download/dev-2026-10/odin-windows-amd64-dev-2026-10.zip",
         "sha256": "b6b2e426a8b6f147b74ec7e18bef8df27cf40fe16193159df7ca09a0cc0c2011"
       }
-    }
+    },
+    "sdl3_image_binding_headers": "3.4.0",
+    "sdl3_ttf_binding_headers": "3.2.2"
   },
   "sdl3": {
     "tag": "release-3.4.18",
@@ -34,6 +36,8 @@
       "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.18/SDL3-3.4.18.tar.gz",
       "sha256": "9c75cf16330322c217dedd2e0609f1124f1b54b8633e763467b4684d0f4334a3"
     },
+    "dir": "SDL3-3.4.18",
+    "license": "zlib",
     "generator": "Ninja",
     "cmake_options": {
       "common": [
@@ -83,5 +87,151 @@
         "SDL_AUDIO_DRIVER_DUMMY"
       ]
     }
+  },
+  "features": {
+    "image": {
+      "description": "SDL3_image for examples/images",
+      "packages": [
+        "sdl3_image"
+      ]
+    },
+    "text": {
+      "description": "SDL3_ttf for examples/text",
+      "packages": [
+        "freetype",
+        "sdl3_ttf"
+      ]
+    }
+  },
+  "freetype": {
+    "feature": "text",
+    "tag": "VER-2-15-0",
+    "version": "2.15.0",
+    "commit": "37515cf56ba3349656049edbed89ffc6f6466f2d",
+    "source": "https://gitlab.freedesktop.org/freetype/freetype",
+    "archive": {
+      "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.15.0.tar.gz",
+      "sha256": "9186627467a616d9a9e3e574748ac0c45fa77398e6364edef3041a8ba8d92f64"
+    },
+    "dir": "freetype-2.15.0",
+    "license": "FTL (docs/FTL.TXT) or GPLv2; used under FTL",
+    "note": "Static, position-independent; linked into SDL3_ttf. No zlib/bzip2/png/brotli/harfbuzz.",
+    "cmake_options": {
+      "common": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+        "-DFT_DISABLE_ZLIB=TRUE",
+        "-DFT_DISABLE_BZIP2=TRUE",
+        "-DFT_DISABLE_PNG=TRUE",
+        "-DFT_DISABLE_HARFBUZZ=TRUE",
+        "-DFT_DISABLE_BROTLI=TRUE"
+      ],
+      "linux": [],
+      "macos": [],
+      "windows": []
+    },
+    "must_not_link": [],
+    "license_files": [
+      "docs/FTL.TXT",
+      "LICENSE.TXT"
+    ]
+  },
+  "sdl3_ttf": {
+    "feature": "text",
+    "tag": "release-3.2.2",
+    "version": "3.2.2",
+    "commit": "a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b",
+    "source": "https://github.com/libsdl-org/SDL_ttf",
+    "archive": {
+      "url": "https://github.com/libsdl-org/SDL_ttf/releases/download/release-3.2.2/SDL3_ttf-3.2.2.tar.gz",
+      "sha256": "63547d58d0185c833213885b635a2c0548201cc8f301e6587c0be1a67e1e045d"
+    },
+    "dir": "SDL3_ttf-3.2.2",
+    "license": "zlib",
+    "note": "FreeType from this lock; HarfBuzz (complex shaping) and PlutoSVG (color emoji) disabled.",
+    "cmake_options": {
+      "common": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_SHARED_LIBS=ON",
+        "-DSDLTTF_VENDORED=OFF",
+        "-DSDLTTF_STRICT=ON",
+        "-DSDLTTF_HARFBUZZ=OFF",
+        "-DSDLTTF_PLUTOSVG=OFF",
+        "-DSDLTTF_SAMPLES=OFF"
+      ],
+      "linux": [],
+      "macos": [],
+      "windows": []
+    },
+    "must_not_link": [
+      "freetype",
+      "harfbuzz",
+      "plutosvg"
+    ]
+  },
+  "sdl3_image": {
+    "feature": "image",
+    "tag": "release-3.4.8",
+    "version": "3.4.8",
+    "commit": "0891fc30428b518e7d018677bd6fa95c1a50f4c6",
+    "source": "https://github.com/libsdl-org/SDL_image",
+    "archive": {
+      "url": "https://github.com/libsdl-org/SDL_image/releases/download/release-3.4.8/SDL3_image-3.4.8.tar.gz",
+      "sha256": "e8223b424bc7541cf84ffff5cf7e4f24ec3711c60462cb1bd6dc1d7bd7f25477"
+    },
+    "dir": "SDL3_image-3.4.8",
+    "license": "zlib (bundled stb_image: public domain / MIT)",
+    "formats": [
+      "BMP",
+      "JPG",
+      "PNG",
+      "QOI"
+    ],
+    "note": "Decoders built in (stb_image for PNG/JPEG); no libpng/libjpeg/codec libraries; native WIC/ImageIO backends off for identical behaviour on all OSes.",
+    "cmake_options": {
+      "common": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DBUILD_SHARED_LIBS=ON",
+        "-DSDLIMAGE_VENDORED=OFF",
+        "-DSDLIMAGE_STRICT=ON",
+        "-DSDLIMAGE_SAMPLES=OFF",
+        "-DSDLIMAGE_BACKEND_STB=ON",
+        "-DSDLIMAGE_PNG_LIBPNG=OFF",
+        "-DSDLIMAGE_BMP=ON",
+        "-DSDLIMAGE_JPG=ON",
+        "-DSDLIMAGE_PNG=ON",
+        "-DSDLIMAGE_QOI=ON",
+        "-DSDLIMAGE_ANI=OFF",
+        "-DSDLIMAGE_AVIF=OFF",
+        "-DSDLIMAGE_GIF=OFF",
+        "-DSDLIMAGE_JXL=OFF",
+        "-DSDLIMAGE_LBM=OFF",
+        "-DSDLIMAGE_PCX=OFF",
+        "-DSDLIMAGE_PNM=OFF",
+        "-DSDLIMAGE_SVG=OFF",
+        "-DSDLIMAGE_TGA=OFF",
+        "-DSDLIMAGE_TIF=OFF",
+        "-DSDLIMAGE_WEBP=OFF",
+        "-DSDLIMAGE_XCF=OFF",
+        "-DSDLIMAGE_XPM=OFF",
+        "-DSDLIMAGE_XV=OFF"
+      ],
+      "linux": [],
+      "macos": [
+        "-DSDLIMAGE_BACKEND_IMAGEIO=OFF"
+      ],
+      "windows": [
+        "-DSDLIMAGE_BACKEND_WIC=OFF"
+      ]
+    },
+    "must_not_link": [
+      "png",
+      "jpeg",
+      "tiff",
+      "webp",
+      "avif",
+      "jxl"
+    ]
   }
 }

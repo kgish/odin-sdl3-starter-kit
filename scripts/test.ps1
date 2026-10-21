@@ -1,6 +1,9 @@
-# Runs unit tests and the headless lifecycle integration tests.
+# Runs unit tests and the headless lifecycle integration tests, including the
+# optional examples whose libraries are installed.
 #
-# Usage: scripts/test.ps1
+# Usage: scripts/test.ps1 [-RequireFeatures]
+#   -RequireFeatures  fail instead of skipping examples whose libraries are missing
+param([switch]$RequireFeatures)
 . "$PSScriptRoot/common.ps1"
 
 Assert-Odin
@@ -18,10 +21,30 @@ Write-Step 'integration runner'
 $runner = Join-Path $Build 'integration.exe'
 Invoke-Native $Odin @('build', (Join-Path $Root 'tests/integration'), '-vet', '-strict-style', "-out:$runner")
 
-& "$PSScriptRoot/build.ps1" debug
-Write-Step 'lifecycle cases: debug'
-Invoke-Native $runner @((Join-Path $Build 'starter-debug.exe'), (Join-Path $Build 'integration-logs/debug'))
+function Test-App([string]$App, [string]$Suite) {
+    foreach ($mode in 'debug', 'release') {
+        & "$PSScriptRoot/build.ps1" $mode $App
+        $exe = if ($mode -eq 'debug') { "$App-debug.exe" } else { "$App.exe" }
+        $runnerArgs = @((Join-Path $Build $exe), (Join-Path $Build "integration-logs/$App-$mode"), "--suite=$Suite")
+        if ($mode -eq 'release') { $runnerArgs += '--release' }
+        Write-Step "lifecycle cases: $App ($mode)"
+        Invoke-Native $runner $runnerArgs
+    }
+}
 
-& "$PSScriptRoot/build.ps1" release
-Write-Step 'lifecycle cases: release'
-Invoke-Native $runner @((Join-Path $Build 'starter.exe'), (Join-Path $Build 'integration-logs/release'), '--release')
+Test-App 'starter' 'starter'
+
+# Feature isolation: the baseline must not import the optional libraries.
+$deps = (& dumpbin /nologo /dependents (Join-Path $Build 'starter.exe')) -join "`n"
+if ($deps -match 'SDL3_(image|ttf)') { Write-Host $deps; throw 'baseline starter links an optional library' }
+Write-Step 'baseline links only SDL3'
+
+foreach ($pair in @(@('images', 'image', '-WithImage'), @('text', 'text', '-WithText'))) {
+    $app, $feature, $flag = $pair
+    if (-not (Test-Feature $feature)) {
+        if ($RequireFeatures) { throw "example '$app' requires: scripts/bootstrap.ps1 $flag" }
+        Write-Step "skipping example '$app' (run scripts/bootstrap.ps1 $flag)"
+        continue
+    }
+    Test-App $app $app
+}

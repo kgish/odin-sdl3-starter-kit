@@ -4,9 +4,10 @@
 // all) once per case with SDL's dummy drivers, so SDL's main-thread
 // requirements are met by the child process rather than a test worker thread.
 //
-// Usage: integration <starter-exe> <log-dir> [--release]
+// Usage: integration <exe> <log-dir> [--release] [--suite=starter|images|text]
 //   --release  the executable logs at Info level, so skip checks that rely on
 //              its Debug resource-destruction lines.
+//   --suite    which executable's cases to run (default: starter).
 package integration
 
 import "core:fmt"
@@ -40,7 +41,7 @@ DESTROYED_BOTH :: []Count{{"destroyed renderer", 1}, {"destroyed window", 1}}
 DESTROYED_WINDOW :: []Count{{"destroyed renderer", 0}, {"destroyed window", 1}}
 DESTROYED_NONE :: []Count{{"destroyed renderer", 0}, {"destroyed window", 0}}
 
-CASES := []Case{
+STARTER_CASES := []Case{
 	{
 		"smoke", {"--frames=60"},
 		{0, {"initialized", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_BOTH},
@@ -83,14 +84,68 @@ CASES := []Case{
 	},
 }
 
+IMAGES_CASES := []Case{
+	{
+		"smoke", {"--frames=30"},
+		{0, {"loaded image 16x16", "smoke run complete after 30 frames", "quit: SUCCESS"}, nil,
+		 {{"destroyed texture", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}},
+	},
+	{
+		"screenshot", {"--frames=5", "--screenshot=images.bmp"},
+		{0, {"saved screenshot images.bmp", "quit: SUCCESS"}, nil, nil},
+	},
+	{
+		"missing-assets", {"--frames=5", "--assets=__missing_asset_dir__"},
+		{1, {"failed to load image", "quit: FAILURE"}, {"smoke run complete"},
+		 {{"destroyed texture", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}},
+	},
+	{
+		"bad-option", {"--definitely-not-an-option"},
+		{1, {"unknown option", "quit: FAILURE"}, nil, {{"destroyed window", 0}}},
+	},
+}
+
+TEXT_CASES := []Case{
+	{
+		"smoke", {"--frames=30"},
+		{0, {"FreeType", "loaded font", "smoke run complete after 30 frames", "quit: SUCCESS"}, nil,
+		 {{"destroyed text engine", 1}, {"closed font", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}},
+	},
+	{
+		"screenshot", {"--frames=5", "--screenshot=text.bmp"},
+		{0, {"saved screenshot text.bmp", "quit: SUCCESS"}, nil, nil},
+	},
+	{
+		"missing-assets", {"--frames=5", "--assets=__missing_asset_dir__"},
+		{1, {"failed to load font", "quit: FAILURE"}, {"smoke run complete"},
+		 {{"destroyed text engine", 0}, {"closed font", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}},
+	},
+	{
+		"bad-option", {"--definitely-not-an-option"},
+		{1, {"unknown option", "quit: FAILURE"}, nil, {{"destroyed window", 0}}},
+	},
+}
+
 main :: proc() {
 	if len(os.args) < 3 {
-		fmt.eprintln("usage: integration <starter-exe> <log-dir> [--release]")
+		fmt.eprintln("usage: integration <exe> <log-dir> [--release] [--suite=starter|images|text]")
 		os.exit(2)
 	}
 	exe := os.args[1]
 	log_dir := os.args[2]
-	release := len(os.args) > 3 && os.args[3] == "--release"
+	release := false
+	cases := STARTER_CASES
+	for arg in os.args[3:] {
+		switch arg {
+		case "--release":       release = true
+		case "--suite=starter": cases = STARTER_CASES
+		case "--suite=images":  cases = IMAGES_CASES
+		case "--suite=text":    cases = TEXT_CASES
+		case:
+			fmt.eprintfln("unknown option %q", arg)
+			os.exit(2)
+		}
+	}
 
 	if err := os.make_directory_all(log_dir); err != nil && !os.is_dir(log_dir) {
 		fmt.eprintfln("cannot create %s: %v", log_dir, err)
@@ -99,7 +154,7 @@ main :: proc() {
 
 	env := headless_env()
 	failed := 0
-	for c in CASES {
+	for c in cases {
 		problems := run_case(exe, log_dir, env, c, release)
 		if len(problems) == 0 {
 			fmt.printfln("PASS %s", c.name)
@@ -113,7 +168,7 @@ main :: proc() {
 		free_all(context.temp_allocator)
 	}
 
-	fmt.printfln("%d/%d cases passed", len(CASES) - failed, len(CASES))
+	fmt.printfln("%d/%d cases passed", len(cases) - failed, len(cases))
 	os.exit(1 if failed > 0 else 0)
 }
 

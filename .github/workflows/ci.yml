@@ -60,7 +60,7 @@ jobs:
 
       - name: Bootstrap (Unix)
         if: runner.os != 'Windows'
-        run: scripts/bootstrap.sh --with-odin
+        run: scripts/bootstrap.sh --with-odin --all-features
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
@@ -70,7 +70,7 @@ jobs:
 
       - name: Test (Unix)
         if: runner.os != 'Windows'
-        run: scripts/test.sh
+        run: scripts/test.sh --require-features
 
       - name: Package and launch check (Unix)
         if: runner.os != 'Windows'
@@ -89,7 +89,7 @@ jobs:
       - name: Bootstrap (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: scripts/bootstrap.ps1
+        run: scripts/bootstrap.ps1 -AllFeatures
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -101,7 +101,7 @@ jobs:
       - name: Test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: scripts/test.ps1
+        run: scripts/test.ps1 -RequireFeatures
 
       - name: Package and launch check (Windows)
         if: runner.os == 'Windows'

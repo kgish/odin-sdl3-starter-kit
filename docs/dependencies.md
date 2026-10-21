@@ -8,6 +8,9 @@ inputs. `scripts/update-deps.sh` is the only script that resolves "latest".
 | --- | --- | --- |
 | Odin | `dev-2026-10` (`84bc3fc`) | Its `vendor:sdl3` bindings declare SDL **3.4.2** headers |
 | SDL3 | `3.4.18` (`829a65d`) | Built from the release tarball as a shared library with CMake + Ninja |
+| SDL3_image | `3.4.8` (`0891fc3`) | Optional (`image` feature). Bindings declare **3.4.0** headers |
+| SDL3_ttf | `3.2.2` (`a1ce367`) | Optional (`text` feature). Bindings declare 3.2.2 headers |
+| FreeType | `2.15.0` (`37515cf`) | Optional (`text` feature). Static library linked into SDL3_ttf |
 
 The bindings are older than the locked SDL. Within SDL 3.x the ABI is
 backwards compatible, and the starter only calls functions present in both.
@@ -56,9 +59,16 @@ Visual Studio 2022 or later with the C++ workload and a Windows SDK. Use a
    dropping a backend whose dev package is absent.
 4. With `--with-odin` (always on Windows), downloads and verifies the locked
    Odin release into `third_party/odin/<os>-<arch>`.
+5. With `--with-image`, `--with-text` or `--all-features` (`-WithImage`,
+   `-WithText`, `-AllFeatures`), builds the optional packages the same way into
+   the same prefix. It then checks each library's dependencies (`ldd`, `otool -L`
+   or `dumpbin /dependents`) against the lock's `must_not_link` list, so a
+   system libpng or FreeType cannot be picked up by accident.
 
-Bootstrap writes a stamp, so rerunning it is a no-op until the lock changes.
-Use `--force` / `-Force` to rebuild.
+Each package writes a stamp (`<prefix>/.lock-<key>`), so rerunning bootstrap is
+a no-op until its lock entry changes. A changed package also rebuilds the
+packages after it in the same feature. Rebuilding SDL3 clears the whole prefix.
+Use `--force` / `-Force` to rebuild everything that is selected.
 
 ## Linking and loading
 
@@ -92,5 +102,59 @@ Then compare `vendor/sdl3/sdl3_version.odin` in the new compiler with
 `odin.sdl3_binding_headers` in the lock, and update the version table in
 `CLAUDE.md`.
 
-Optional libraries (SDL3_image, SDL3_ttf, GPU shader tools) are not part of
-the baseline and are not in the lock.
+`update-deps.sh` also resolves SDL3_image, SDL3_ttf and FreeType. FreeType does
+not publish GitHub releases, so its version comes from the
+[savannah listing](https://download.savannah.gnu.org/releases/freetype/) and its
+commit from the `VER-x-y-z` tag in the
+[freedesktop repository](https://gitlab.freedesktop.org/freetype/freetype).
+Compare `odin.sdl3_image_binding_headers` and `odin.sdl3_ttf_binding_headers`
+with `vendor/sdl3/image` and `vendor/sdl3/ttf` in the new compiler too.
+
+## Optional libraries
+
+The examples' native libraries are opt-in **features** (`features` in the
+lock). Nothing in `src/` imports them, and a bootstrap without feature flags
+does not build them.
+
+| Feature | Packages | Used by |
+| --- | --- | --- |
+| `image` | SDL3_image | `examples/images` |
+| `text` | FreeType, SDL3_ttf | `examples/text` |
+
+### SDL3_image codecs
+
+SDL3_image is built with its bundled **stb_image** backend for BMP, JPEG, PNG
+and QOI, and every other format is off. This needs no external codec libraries,
+so there are none to lock or license. The platform backends (ImageIO on
+macOS, WIC on Windows) are also off, so all three OSes decode the same way. If
+you need another format, enable it in the lock. If it needs an external
+library (AVIF, JPEG XL, TIFF, WebP), add that library to the lock as its own
+package, with its version, checksum and license, and remove it from
+`must_not_link`.
+
+### SDL3_ttf and FreeType
+
+SDL3_ttf needs FreeType. Bootstrap builds FreeType 2.15.0 from source as a
+static, position-independent library with zlib, bzip2, PNG, Brotli and HarfBuzz
+support off, and SDL3_ttf links it in. Only `SDL3_ttf` ships as a shared
+library. SDL3_ttf is built with `SDLTTF_HARFBUZZ=OFF` and `SDLTTF_PLUTOSVG=OFF`.
+Text is therefore laid out without complex shaping (fine for Latin, Greek and
+Cyrillic, but not for Arabic, Indic scripts and so on), and SVG/colour emoji
+glyphs are not rendered. To enable shaping, add HarfBuzz to the lock as its own
+package and turn on `SDLTTF_HARFBUZZ`.
+
+FreeType is used under the FreeType License (`docs/FTL.TXT`). Bootstrap
+installs each package's license files into `<prefix>/share/licenses/<key>`
+(`<prefix>/licenses/<key>` on Windows), and packaging copies them to
+`dist/*/licenses/`.
+
+### Windows
+
+The Odin distribution also bundles `SDL3_image` and `SDL3_ttf` import
+libraries and DLLs under `vendor/sdl3/image` and `vendor/sdl3/ttf`, and
+`vendor:sdl3/image` and `vendor:sdl3/ttf` link them by path. As with SDL3,
+`bootstrap.ps1` replaces them **in the project-local Odin only** with the
+locked builds when the matching feature is selected.
+
+GPU shader tools are not part of the lock; they will be chosen if a GPU example
+is added.

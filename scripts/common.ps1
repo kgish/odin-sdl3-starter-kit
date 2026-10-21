@@ -47,7 +47,24 @@ function Assert-Sdl {
     if (-not (Test-Path (Join-Path $Prefix 'bin/SDL3.dll'))) { throw "locked SDL3 not found in $Prefix; run scripts/bootstrap.ps1" }
 }
 
-# Windows finds DLLs next to the executable; keep the locked one there.
+# True if bootstrap installed every package of an optional feature ('image' or 'text').
+function Test-Feature([string]$Feature) {
+    foreach ($key in $Lock.features.$Feature.packages) {
+        if (-not (Test-Path (Join-Path $Prefix ".lock-$key"))) { return $false }
+    }
+    return $true
+}
+
+function Assert-Feature([string]$Feature) {
+    if (-not (Test-Feature $Feature)) {
+        $flag = @{ image = '-WithImage'; text = '-WithText' }[$Feature]
+        throw "optional feature '$Feature' not installed; run scripts/bootstrap.ps1 $flag"
+    }
+}
+
+# Windows finds DLLs next to the executable; keep the locked ones there.
 function Copy-SdlRuntime([string]$Dir) {
     Copy-Item (Join-Path $Prefix 'bin/SDL3.dll') $Dir -Force
+    if (Test-Feature 'image') { Copy-Item (Join-Path $Prefix 'bin/SDL3_image.dll') $Dir -Force }
+    if (Test-Feature 'text')  { Copy-Item (Join-Path $Prefix 'bin/SDL3_ttf.dll') $Dir -Force }
 }

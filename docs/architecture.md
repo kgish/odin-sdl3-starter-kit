@@ -82,3 +82,18 @@ The app uses no worker threads, and only SDL's main-thread event pump calls
 `app_event`. If you add workers, send their owned results through a bounded,
 synchronized queue and drain it in `app_iterate`. Do not push SDL events that
 mutate `App_State` from other threads.
+
+## Optional examples (`examples/`)
+
+`examples/images` and `examples/text` are separate executable packages. Each
+is a single file with its own copy of the startup adapter and callbacks, plus
+a minimal `App` struct, so it can be copied or deleted without touching `src/`
+or `game/`. The two are deliberately not factored into a shared package: a
+shared "platform" layer would be an abstraction with only one real user.
+
+They follow the same ownership rules as the starter. Resources created in
+`app_init` (texture; or font, text engine and `TTF_Text` objects) are owned
+by the `App` and destroyed in `app_quit` in reverse order: the text objects and
+text engine before the font, all before `TTF_Quit`, and everything before the
+renderer and window. A failed load returns `.FAILURE` and still goes through
+the same partial cleanup.
