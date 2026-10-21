@@ -33,9 +33,11 @@ Game :: struct {
 	rng:    rand.Default_Random_State,
 	player: Body,
 	ball:   Body,
-	// Times the ball has hit a world edge. Only ever increases, so the
-	// platform layer can compare it across iterations to trigger sounds.
-	bounces: u64,
+	// Times the ball has hit a world edge or the player's paddle. They only
+	// ever increase, so the platform layer can compare them across
+	// iterations to trigger sounds.
+	bounces:     u64,
+	paddle_hits: u64,
 }
 
 // Creates a game whose behaviour depends only on `seed` and the inputs fed to update.
@@ -105,6 +107,11 @@ game_update :: proc(g: ^Game, input: Step_Input, dt: f32) {
 	if bounce_in_world(&g.ball) {
 		g.bounces += 1
 	}
+	if bounce_off_body(&g.ball, g.player) {
+		g.paddle_hits += 1
+		// The paddle may have pushed the ball against a wall.
+		clamp_to_world(&g.ball)
+	}
 }
 
 // Position to draw a body at, blending the last two steps by `alpha`.
@@ -133,5 +140,27 @@ bounce_in_world :: proc(b: ^Body) -> (hit: bool) {
 		hit = true
 	}
 	clamp_to_world(b)
+	return
+}
+
+// If `b` overlaps `paddle`, pushes it out along the axis of least overlap and
+// reflects its velocity on that axis. Returns true only when the ball was
+// moving towards the paddle, so a ball the paddle pushes from behind (or
+// one still separating) is moved but does not count as a hit.
+@(private)
+bounce_off_body :: proc(b: ^Body, paddle: Body) -> (hit: bool) {
+	reach := (b.size + paddle.size) / 2
+	delta := b.pos - paddle.pos
+	overlap := reach - [2]f32{abs(delta.x), abs(delta.y)}
+	if overlap.x <= 0 || overlap.y <= 0 {
+		return false
+	}
+	axis := 0 if overlap.x < overlap.y else 1
+	side: f32 = 1 if delta[axis] >= 0 else -1
+	b.pos[axis] = paddle.pos[axis] + side * reach
+	if b.vel[axis] * side < 0 {
+		b.vel[axis] = -b.vel[axis]
+		hit = true
+	}
 	return
 }

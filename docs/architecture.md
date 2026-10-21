@@ -55,8 +55,9 @@ Each `app_iterate` call:
    slows down instead of spiralling, and are counted.
 2. Runs that many `game_update` calls. Each consumes one `Step_Input`, so a
    press is seen by exactly one step, even when 0 or several steps run.
-3. Plays a beep if the game's `bounces` counter went up during those steps
-   (at most one beep per iteration).
+3. Plays a sound for each of the game's hit counters (`bounces`,
+   `paddle_hits`) that went up during those steps (at most one of each per
+   iteration).
 4. Renders, interpolating bodies between their previous and current position
    by the leftover fraction.
 
@@ -76,7 +77,10 @@ is not used. If you add it, use SDL text input events, not scancodes.
 ## Game (`game/`)
 
 The example has a `Menu` → `Playing` ⇄ `Paused` state machine, a player square
-and a ball whose launch direction comes from a seeded RNG. The package has no
+(the paddle) and a ball whose launch direction comes from a seeded RNG. The
+ball reflects off the world edges and off the paddle; for the paddle it is
+pushed out along the axis of least overlap, and only counts as a hit when it
+was moving towards the paddle. The package has no
 SDL import, so it can be unit-tested and replaced freely.
 
 ## Threads
@@ -89,11 +93,13 @@ mutate `App_State` from other threads.
 ## Sound (`src/audio.odin`)
 
 The game package knows nothing about sound: it only counts how often the ball
-hits a world edge (`Game.bounces`). After the simulation steps of an
-iteration, `app_iterate` compares that counter with the last value it answered
-and queues a beep on an SDL audio device stream. The beep is a 60 ms, 880 Hz
-sine tone with a short fade-in and fade-out, generated once at startup, and
-SDL copies it on every put. If the stream already holds more than 100 ms of
+hits a world edge (`Game.bounces`) or the player's paddle
+(`Game.paddle_hits`). After the simulation steps of an iteration,
+`app_iterate` compares each counter with the last value it answered and
+queues the matching sound on an SDL audio device stream: an 880 Hz beep for a
+wall and an octave higher (1760 Hz) for the paddle. Both are 60 ms sine tones
+with a short fade-in and fade-out, generated once at startup, and SDL copies
+them on every put. If the stream already holds more than 100 ms of
 sound, the beep is skipped, so beeps can't pile up. Sound is optional: if no
 audio device opens, the app logs a warning and runs silently, and `--mute`
 skips audio entirely.

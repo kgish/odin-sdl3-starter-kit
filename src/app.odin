@@ -21,8 +21,9 @@ App_State :: struct {
 	window:    ^sdl.Window,
 	renderer:  ^sdl.Renderer,
 	audio:     Audio,
-	// game.bounces already answered with a beep.
-	bounces_heard: u64,
+	// Game hit counters already answered with a sound.
+	bounces_heard:     u64,
+	paddle_hits_heard: u64,
 	input:     game.Input,
 	timestep:  game.Timestep,
 	game:      game.Game,
@@ -131,10 +132,15 @@ app_iterate :: proc(state: ^App_State) -> sdl.AppResult {
 		for _ in 0 ..< steps {
 			game.game_update(&state.game, game.input_consume(&state.input), dt)
 		}
-		// One beep per iteration, however many bounces the steps produced.
+		// At most one sound of each kind per iteration, however many hits the
+		// steps produced.
 		if state.game.bounces != state.bounces_heard {
 			state.bounces_heard = state.game.bounces
-			audio_beep(&state.audio)
+			audio_play(&state.audio, .Wall)
+		}
+		if state.game.paddle_hits != state.paddle_hits_heard {
+			state.paddle_hits_heard = state.game.paddle_hits
+			audio_play(&state.audio, .Paddle)
 		}
 		if state.timestep.dropped_steps != state.dropped_reported {
 			log.debugf("overloaded: dropped %v steps total", state.timestep.dropped_steps)

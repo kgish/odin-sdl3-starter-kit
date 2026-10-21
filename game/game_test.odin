@@ -219,6 +219,45 @@ bounces_are_counted_once_per_hit :: proc(t: ^testing.T) {
 }
 
 @(test)
+ball_reflects_off_paddle :: proc(t: ^testing.T) {
+	g := game_make(1)
+	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
+	reach: f32 = (BALL_SIZE + PLAYER_SIZE) / 2
+	// Ball approaching the paddle's right side, level with it.
+	g.ball.pos = g.player.pos + {reach + 1, 0}
+	g.ball.vel = {-BALL_SPEED, 0}
+	bounces := g.bounces
+
+	for _ in 0 ..< 3 {
+		game_update(&g, {}, 1.0 / 60)
+	}
+	testing.expect_value(t, g.paddle_hits, 1)
+	testing.expect_value(t, g.bounces, bounces) // not a wall hit
+	testing.expect(t, g.ball.vel.x > 0)
+	testing.expect(t, g.ball.pos.x >= g.player.pos.x + reach) // pushed clear
+
+	for _ in 0 ..< 5 {
+		game_update(&g, {}, 1.0 / 60)
+	}
+	testing.expect_value(t, g.paddle_hits, 1) // separating: no repeat hits
+}
+
+@(test)
+paddle_pushing_a_departing_ball_is_not_a_hit :: proc(t: ^testing.T) {
+	g := game_make(1)
+	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
+	reach: f32 = (BALL_SIZE + PLAYER_SIZE) / 2
+	// Ball moving slowly right, paddle chasing it faster from the left.
+	g.ball.pos = g.player.pos + {reach + 0.5, 0}
+	g.ball.vel = {10, 0}
+
+	game_update(&g, {held = {.Right}}, 1.0 / 60)
+	testing.expect_value(t, g.paddle_hits, 0)
+	testing.expect(t, g.ball.vel.x > 0)
+	testing.expect(t, g.ball.pos.x - g.player.pos.x >= reach)
+}
+
+@(test)
 render_position_interpolates :: proc(t: ^testing.T) {
 	b := Body{prev_pos = {0, 0}, pos = {10, 20}}
 	testing.expect_value(t, body_render_pos(b, 0), [2]f32{0, 0})
