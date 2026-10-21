@@ -9,9 +9,10 @@ import sdl "vendor:sdl3"
 UI_TOGGLE_KEY :: sdl.Scancode.F1
 
 // Debug UI drawn with vendor:microui. The microui context lives inside
-// App_State (it is large, and App_State is heap allocated). `atlas` holds
-// microui's built-in font and icons; it is created in ui_init and destroyed
-// only in ui_destroy, before the renderer.
+// App_State (it is large, and App_State is heap allocated). Text is drawn in
+// a baked font that the Ui borrows (App_State owns it and destroys it after
+// the Ui). `atlas` holds microui's built-in icons; it is created in ui_init
+// and destroyed only in ui_destroy, before the renderer.
 Ui :: struct {
 	ctx:     mu.Context,
 	atlas:   ^sdl.Texture,
@@ -26,10 +27,18 @@ Ui :: struct {
 
 FPS_WINDOW_NS :: 500_000_000
 
-ui_init :: proc(ui: ^Ui, renderer: ^sdl.Renderer) -> bool {
+// Each baked font pixel is this many window units wide in the panel.
+UI_FONT_SCALE :: 2
+
+ui_init :: proc(ui: ^Ui, renderer: ^sdl.Renderer, font: ^Baked_Font) -> bool {
 	mu.init(&ui.ctx)
-	ui.ctx.text_width = mu.default_atlas_text_width
-	ui.ctx.text_height = mu.default_atlas_text_height
+	ui.ctx.style.font = mu.Font(font)
+	ui.ctx.text_width = proc(font: mu.Font, text: string) -> i32 {
+		return baked_font_width((^Baked_Font)(font), text) * UI_FONT_SCALE
+	}
+	ui.ctx.text_height = proc(font: mu.Font) -> i32 {
+		return (^Baked_Font)(font).height * UI_FONT_SCALE
+	}
 
 	// The atlas is an alpha mask; expand it to white RGBA so color mod tints it.
 	W :: mu.DEFAULT_ATLAS_WIDTH
@@ -118,14 +127,14 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 	mu.begin(ctx)
 	defer mu.end(ctx)
 
-	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 246}, {.NO_CLOSE}) {
+	if !mu.begin_window(ctx, "Tuning", {16, 16, 460, 246}, {.NO_CLOSE}) {
 		return
 	}
 	defer mu.end_window(ctx)
 
 	t := g.tuning
 	changed := false
-	mu.layout_row(ctx, {100, -1})
+	mu.layout_row(ctx, {160, -1})
 	mu.label(ctx, "Ball speed")
 	if .CHANGE in mu.slider(ctx, &t.ball_speed, game.BALL_MIN_SPEED, game.BALL_MAX_SPEED, 1, "%.0f") do changed = true
 	mu.label(ctx, "Ball size")
@@ -142,7 +151,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 	mu.label(ctx, fmt.tprintf("%.0f (x%.2f per paddle hit)", game.game_ball_speed(g^), game.BALL_SPEEDUP))
 	mu.layout_row(ctx, {-1})
 	mu.checkbox(ctx, "Show FPS", &ui.show_fps)
-	mu.layout_row(ctx, {100, -1})
+	mu.layout_row(ctx, {160, -1})
 	if .SUBMIT in mu.button(ctx, "Defaults") {
 		t = game.TUNING_DEFAULT
 		changed = true
@@ -180,13 +189,9 @@ ui_draw :: proc(ui: ^Ui, r: ^sdl.Renderer, window: ^sdl.Window) -> bool {
 			rect := sdl.FRect{f32(c.rect.x), f32(c.rect.y), f32(c.rect.w), f32(c.rect.h)}
 			sdl.RenderFillRect(r, &rect) or_return
 		case ^mu.Command_Text:
+			sdl.SetRenderDrawColor(r, c.color.r, c.color.g, c.color.b, c.color.a) or_return
 			pos := [2]f32{f32(c.pos.x), f32(c.pos.y)}
-			for ch in c.str {
-				if ch & 0xc0 == 0x80 do continue // UTF-8 continuation byte
-				src := mu.default_atlas[mu.DEFAULT_ATLAS_FONT + min(int(ch), 127)]
-				draw_atlas(ui.atlas, r, src, pos, c.color) or_return
-				pos.x += f32(src.w)
-			}
+			baked_font_draw((^Baked_Font)(c.font), r, pos, c.str, UI_FONT_SCALE) or_return
 		case ^mu.Command_Icon:
 			src := mu.default_atlas[c.id]
 			pos := [2]f32{f32(c.rect.x + (c.rect.w - src.w) / 2), f32(c.rect.y + (c.rect.h - src.h) / 2)}

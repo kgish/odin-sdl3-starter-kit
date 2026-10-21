@@ -44,7 +44,7 @@ scripts/package.ps1
 | `assets/` | Fonts, background and sprite, with [provenance and licenses](assets/README.md) |
 | `tests/integration/` | Runs the real executable headlessly through success, quit and failure paths |
 | `scripts/` | Bootstrap, build, test, package and dependency-update scripts (`.sh` and `.ps1`) |
-| `tools/bake-font/` | Dev tool: bakes the Jersey 10 (score) and Silkscreen (menu) glyphs into `src/*_font.odin` (`scripts/bake-fonts.sh`, needs `--with-text`) |
+| `tools/bake-font/` | Dev tool: bakes the Jersey 10 (score) and Silkscreen (menu, tuning panel) glyphs into `src/*_font.odin` (`scripts/bake-fonts.sh`, needs `--with-text`) |
 | `deps.lock.json` | Exact Odin, SDL3 and optional-library versions, commits, checksums and build options |
 | `docs/` | [Architecture](docs/architecture.md), [dependencies](docs/dependencies.md), [testing](docs/testing.md) |
 
@@ -124,4 +124,4 @@ HarfBuzz, so complex scripts are not shaped. See
 
 MIT; see [LICENSE](LICENSE). SDL3, SDL3_image and SDL3_ttf are under the zlib
 license, FreeType under the FreeType License, and the fonts (Jersey 10 for the score,
-Silkscreen for the menu, Press Start 2P for the text example) under the SIL OFL 1.1. Their license texts are shipped in `dist/*/licenses/`.
+Silkscreen for the menu and tuning panel, Press Start 2P for the text example) under the SIL OFL 1.1. Their license texts are shipped in `dist/*/licenses/`.

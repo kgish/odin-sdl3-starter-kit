@@ -105,7 +105,7 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	if injected_failure(state, .Audio) do return .FAILURE
 
 	// Debug UI (tuning panel, toggled with F1)
-	if !ui_init(&state.ui, state.renderer) do return .FAILURE
+	if !ui_init(&state.ui, state.renderer, &state.menu_font) do return .FAILURE
 	if cfg.show_tuning do ui_set_visible(&state.ui, true)
 	if injected_failure(state, .Ui) do return .FAILURE
 

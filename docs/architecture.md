@@ -35,7 +35,7 @@ and `.FAILURE`.
 | `^sdl.Window` | `app_init` (Window stage) | `app_quit`, after the renderer |
 | `^sdl.Renderer` | `app_init` (Renderer stage) | `app_quit`, after the audio stream |
 | `^sdl.AudioStream` + beep samples | `audio_open` (Audio stage); optional | `audio_close`, after the UI atlas |
-| microui context + atlas `^sdl.Texture` | `ui_init` (Ui stage) | `ui_destroy`, first in `app_quit` |
+| microui context + icon atlas `^sdl.Texture` (borrows the menu font) | `ui_init` (Ui stage) | `ui_destroy`, first in `app_quit` |
 | Score and menu font atlases `^sdl.Texture` | `baked_font_init` (Renderer stage), from glyphs baked into `src/score_font.odin` and `src/menu_font.odin` | `baked_font_destroy`, after the UI atlas |
 | SDL subsystems | `sdl.Init` / `sdl.InitSubSystem` in `app_init` | SDL, after `app_quit` returns |
 
@@ -113,7 +113,9 @@ skips audio entirely.
 
 A debug panel built with `vendor:microui`, which ships with Odin and is pure
 Odin, so it adds no native library. Its context lives in `App_State`. Its
-font/icon atlas is uploaded once to an SDL texture.
+icon atlas is uploaded once to an SDL texture. Text is drawn in the baked
+Silkscreen menu font at 2×; the panel borrows that font, and `app_quit`
+destroys it after the panel.
 
 - `app_event` forwards mouse events to microui while the panel is visible. F1
   toggles it and is handled before game key bindings.
