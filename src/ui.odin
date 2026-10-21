@@ -16,7 +16,15 @@ Ui :: struct {
 	ctx:     mu.Context,
 	atlas:   ^sdl.Texture,
 	visible: bool,
+	// FPS overlay, toggled from the panel. `fps` is the rate measured over the
+	// last FPS_WINDOW_NS; it keeps updating while the panel is hidden.
+	show_fps:     bool,
+	fps:          f32,
+	fps_frames:   int,
+	fps_start_ns: u64,
 }
+
+FPS_WINDOW_NS :: 500_000_000
 
 ui_init :: proc(ui: ^Ui, renderer: ^sdl.Renderer) -> bool {
 	mu.init(&ui.ctx)
@@ -58,6 +66,20 @@ ui_set_visible :: proc(ui: ^Ui, visible: bool) {
 	log.infof("tuning panel %s (F1)", "shown" if visible else "hidden")
 }
 
+// Counts one rendered frame at `now_ns` (monotonic) and refreshes `fps` once
+// per FPS_WINDOW_NS.
+ui_count_frame :: proc(ui: ^Ui, now_ns: u64) {
+	if ui.fps_start_ns == 0 {
+		ui.fps_start_ns = now_ns
+	}
+	ui.fps_frames += 1
+	if elapsed := now_ns - ui.fps_start_ns; elapsed >= FPS_WINDOW_NS {
+		ui.fps = f32(ui.fps_frames) * 1e9 / f32(elapsed)
+		ui.fps_frames = 0
+		ui.fps_start_ns = now_ns
+	}
+}
+
 // Forwards mouse input to microui while the panel is visible. Coordinates are
 // window coordinates, which is also the space the panel is drawn in.
 ui_handle_event :: proc(ui: ^Ui, event: ^sdl.Event) {
@@ -96,7 +118,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game) {
 	mu.begin(ctx)
 	defer mu.end(ctx)
 
-	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 172}, {.NO_CLOSE}) {
+	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 196}, {.NO_CLOSE}) {
 		return
 	}
 	defer mu.end_window(ctx)
@@ -113,6 +135,8 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game) {
 
 	mu.label(ctx, "Current speed")
 	mu.label(ctx, fmt.tprintf("%.0f (x%.2f per paddle hit)", game.game_ball_speed(g^), game.BALL_SPEEDUP))
+	mu.layout_row(ctx, {-1})
+	mu.checkbox(ctx, "Show FPS", &ui.show_fps)
 	mu.layout_row(ctx, {100, -1})
 	if .SUBMIT in mu.button(ctx, "Defaults") {
 		t = game.TUNING_DEFAULT

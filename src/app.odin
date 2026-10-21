@@ -137,8 +137,10 @@ app_iterate :: proc(state: ^App_State) -> sdl.AppResult {
 		// Nothing is visible and vsync may not block while minimized.
 		sdl.DelayNS(10_000_000)
 	} else {
+		now := sdl.GetTicksNS()
+		ui_count_frame(&state.ui, now)
 		ui_update(&state.ui, &state.game)
-		steps := game.timestep_advance(&state.timestep, sdl.GetTicksNS())
+		steps := game.timestep_advance(&state.timestep, now)
 		dt := game.timestep_dt(state.timestep)
 		for _ in 0 ..< steps {
 			game.game_update(&state.game, game.input_consume(&state.input), dt)
