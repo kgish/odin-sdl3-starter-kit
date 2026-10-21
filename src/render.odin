@@ -34,7 +34,7 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	}
 
 	if state.ui.show_fps {
-		draw_fps(r, state.ui.fps) or_return
+		draw_fps(&state.menu_font, r, state.ui.fps) or_return
 	}
 
 	ui_draw(&state.ui, r, state.window) or_return
@@ -62,11 +62,10 @@ draw_centered :: proc(f: ^Baked_Font, r: ^sdl.Renderer, y: f32, text: string, sc
 
 // Draws the measured frame rate in the top-right corner, in world units.
 @(private = "file")
-draw_fps :: proc(r: ^sdl.Renderer, fps: f32) -> bool {
-	text := fmt.ctprintf("%.0f FPS", fps)
-	width := f32(len(text) * sdl.DEBUG_TEXT_FONT_CHARACTER_SIZE)
+draw_fps :: proc(f: ^Baked_Font, r: ^sdl.Renderer, fps: f32) -> bool {
+	text := fmt.tprintf("%.0f FPS", fps)
 	sdl.SetRenderDrawColor(r, 230, 230, 230, 255) or_return
-	return sdl.RenderDebugText(r, game.WORLD_WIDTH - width - 4, 4, text)
+	return baked_font_draw(f, r, {f32(game.WORLD_WIDTH - baked_font_width(f, text) - 4), 4}, text)
 }
 
 // Saves the frame drawn so far (before present) as a BMP, for tests and docs.
