@@ -27,7 +27,7 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 		draw_centered(&state.menu_font, r, game.WORLD_HEIGHT / 2 - 16, "ODIN + SDL3 STARTER", 2) or_return
 		draw_centered(&state.menu_font, r, game.WORLD_HEIGHT / 2 + 4, "ENTER: PLAY  ESC: QUIT") or_return
 	case .Paused:
-		draw_centered_text(r, game.WORLD_HEIGHT / 2 - 4, "PAUSED (P)") or_return
+		draw_centered(&state.menu_font, r, game.WORLD_HEIGHT / 2 - 7, "PAUSED (P)", 2) or_return
 		draw_centered(&state.score_font, r, 4, fmt.tprintf("SCORE %d", g.score)) or_return
 	case .Playing:
 		draw_centered(&state.score_font, r, 4, fmt.tprintf("SCORE %d", g.score)) or_return
@@ -50,12 +50,6 @@ draw_body :: proc(r: ^sdl.Renderer, body: game.Body, alpha: f32) -> bool {
 	half := body.size / 2
 	rect := sdl.FRect{pos.x - half, pos.y - half, body.size, body.size}
 	return sdl.RenderFillRect(r, &rect)
-}
-
-@(private = "file")
-draw_centered_text :: proc(r: ^sdl.Renderer, y: f32, text: cstring) -> bool {
-	width := f32(len(text) * sdl.DEBUG_TEXT_FONT_CHARACTER_SIZE)
-	return sdl.RenderDebugText(r, (game.WORLD_WIDTH - width) / 2, y, text)
 }
 
 // Draws `text` in a baked pixel font, horizontally centered, with its top at `y`.
