@@ -64,6 +64,8 @@ Game :: struct {
 	// iterations to trigger sounds.
 	bounces:     u64,
 	paddle_hits: u64,
+	// Points this round: one per paddle hit. Reset when a round starts.
+	score: u64,
 }
 
 // Creates a game whose behaviour depends only on `seed` and the inputs fed to update.
@@ -74,6 +76,7 @@ game_make :: proc(seed: u64) -> Game {
 }
 
 game_reset_round :: proc(g: ^Game) {
+	g.score = 0
 	gen := rand.default_random_generator(&g.rng)
 
 	g.player = Body{size = g.tuning.player_size}
@@ -164,6 +167,7 @@ game_update :: proc(g: ^Game, input: Step_Input, dt: f32) {
 		}
 		if bounce_off_body(&g.ball, g.player) {
 			g.paddle_hits += 1
+			g.score += 1
 			g.ball.vel = speed_up(g.ball.vel)
 			// The paddle may have pushed the ball against a wall.
 			clamp_to_world(&g.ball)

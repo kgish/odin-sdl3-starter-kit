@@ -62,8 +62,8 @@ rendering and sound:
 
 - The ball bounces off the edges of the screen with an 880 Hz beep.
 - It also bounces off the paddle, with a higher 1760 Hz beep. Each paddle hit
-  makes the ball 10 % faster, up to 1000 units/s (from 90 at the start of a
-  round).
+  scores a point (shown at the top, reset when a round starts) and makes the
+  ball 10 % faster, up to 1000 units/s (from 90 at the start of a round).
 - The play field is 320×180 world units, letterboxed and scaled to the window.
 - The **tuning panel** (F1, or start with `--tuning`) has sliders for the
   ball's launch speed, the ball size and the paddle size. Changes apply

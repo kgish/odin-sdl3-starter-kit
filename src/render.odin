@@ -1,5 +1,6 @@
 package main
 
+import "core:fmt"
 import "core:log"
 import "core:strings"
 import "../game"
@@ -26,7 +27,9 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 		draw_centered_text(r, game.WORLD_HEIGHT / 2 + 4, "ENTER: PLAY  ESC: QUIT") or_return
 	case .Paused:
 		draw_centered_text(r, game.WORLD_HEIGHT / 2 - 4, "PAUSED (P)") or_return
+		draw_centered_text(r, 4, fmt.ctprintf("SCORE %d", g.score)) or_return
 	case .Playing:
+		draw_centered_text(r, 4, fmt.ctprintf("SCORE %d", g.score)) or_return
 	}
 
 	ui_draw(&state.ui, r, state.window) or_return

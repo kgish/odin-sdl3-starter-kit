@@ -209,6 +209,7 @@ bounces_are_counted_once_per_hit :: proc(t: ^testing.T) {
 		game_update(&g, {}, 1.0 / 60)
 	}
 	testing.expect_value(t, g.bounces, 1) // hit the right edge once, now moving away
+	testing.expect_value(t, g.score, 0)   // walls don't score
 	testing.expect(t, g.ball.vel.x < 0)
 
 	game_update(&g, {pressed = {.Pause}}, 1.0 / 60)
@@ -233,6 +234,7 @@ ball_reflects_off_paddle :: proc(t: ^testing.T) {
 		game_update(&g, {}, 1.0 / 60)
 	}
 	testing.expect_value(t, g.paddle_hits, 1)
+	testing.expect_value(t, g.score, 1)
 	testing.expect_value(t, g.bounces, bounces) // not a wall hit
 	testing.expect(t, g.ball.vel.x > 0)
 	testing.expect(t, abs(linalg.length(g.ball.vel) - BALL_SPEED * BALL_SPEEDUP) < 0.001)
@@ -263,8 +265,10 @@ new_round_resets_ball_speed :: proc(t: ^testing.T) {
 	g := game_make(1)
 	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
 	g.ball.vel = speed_up(speed_up(g.ball.vel))
+	g.score = 7
 	game_reset_round(&g)
 	testing.expect(t, abs(linalg.length(g.ball.vel) - BALL_SPEED) < 0.001)
+	testing.expect_value(t, g.score, 0)
 }
 
 @(test)
