@@ -12,9 +12,9 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window`, `renderer`, `audio`, `ui` and `background` are created
-// in app_init and destroyed only in app_quit (background, ui, audio, renderer,
-// then window). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer`, `score`, `audio`, `ui` and `background` are
+// created in app_init and destroyed only in app_quit (background, ui, score,
+// audio, renderer, then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
@@ -23,6 +23,7 @@ App_State :: struct {
 	renderer:  ^sdl.Renderer,
 	audio:     Audio,
 	ui:        Ui,
+	score:     Score_Text,
 	// Optional: nil when the image is missing; render then uses the clear color.
 	background: ^sdl.Texture,
 	// Game hit counters already answered with a sound.
@@ -91,6 +92,7 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	if !sdl.SetRenderLogicalPresentation(state.renderer, game.WORLD_WIDTH, game.WORLD_HEIGHT, .LETTERBOX) {
 		log.warnf("SetRenderLogicalPresentation failed: %s", sdl.GetError())
 	}
+	if !score_text_init(&state.score, state.renderer) do return .FAILURE
 	if injected_failure(state, .Renderer) do return .FAILURE
 
 	// Audio (optional: the game still runs without a sound device)
@@ -212,6 +214,7 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	}
 	background_destroy(&state.background)
 	ui_destroy(&state.ui)
+	score_text_destroy(&state.score)
 	audio_close(&state.audio)
 	if state.renderer != nil {
 		sdl.DestroyRenderer(state.renderer)

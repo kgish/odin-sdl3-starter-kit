@@ -36,6 +36,7 @@ and `.FAILURE`.
 | `^sdl.Renderer` | `app_init` (Renderer stage) | `app_quit`, after the audio stream |
 | `^sdl.AudioStream` + beep samples | `audio_open` (Audio stage); optional | `audio_close`, after the UI atlas |
 | microui context + atlas `^sdl.Texture` | `ui_init` (Ui stage) | `ui_destroy`, first in `app_quit` |
+| Score font atlas `^sdl.Texture` | `score_text_init` (Renderer stage), from glyphs baked into `src/score_font.odin` | `score_text_destroy`, after the UI atlas |
 | SDL subsystems | `sdl.Init` / `sdl.InitSubSystem` in `app_init` | SDL, after `app_quit` returns |
 
 `app_quit` runs exactly once, also after a failed `app_init`, and checks each

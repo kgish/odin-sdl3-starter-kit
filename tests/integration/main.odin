@@ -38,13 +38,13 @@ Case :: struct {
 }
 
 // What app_quit destroyed, by the last init stage that created something.
-DESTROYED_ALL :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_TO_AUDIO :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_BOTH :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_WINDOW :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
-DESTROYED_NONE :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
-DESTROYED_NO_BACKGROUND :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_MUTED :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_ALL :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_TO_AUDIO :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_BOTH :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_WINDOW :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
+DESTROYED_NONE :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
+DESTROYED_NO_BACKGROUND :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_MUTED :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
 
 STARTER_CASES := []Case{
 	{

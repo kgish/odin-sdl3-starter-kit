@@ -41,9 +41,10 @@ scripts/package.ps1
 | `game/` | SDL-independent simulation: input transitions, fixed timestep, state machine, example game |
 | `examples/images/` | Optional: PNG loading with SDL3_image ([below](#optional-examples)) |
 | `examples/text/` | Optional: TrueType text with SDL3_ttf |
-| `assets/` | Example font and sprite, with [provenance and licenses](assets/README.md) |
+| `assets/` | Fonts, background and sprite, with [provenance and licenses](assets/README.md) |
 | `tests/integration/` | Runs the real executable headlessly through success, quit and failure paths |
 | `scripts/` | Bootstrap, build, test, package and dependency-update scripts (`.sh` and `.ps1`) |
+| `tools/bake-score-font/` | Dev tool: bakes the Jersey 10 score glyphs into `src/score_font.odin` (`scripts/bake-score-font.sh`, needs `--with-text`) |
 | `deps.lock.json` | Exact Odin, SDL3 and optional-library versions, commits, checksums and build options |
 | `docs/` | [Architecture](docs/architecture.md), [dependencies](docs/dependencies.md), [testing](docs/testing.md) |
 
@@ -121,5 +122,5 @@ HarfBuzz, so complex scripts are not shaped. See
 ## License
 
 MIT; see [LICENSE](LICENSE). SDL3, SDL3_image and SDL3_ttf are under the zlib
-license, FreeType under the FreeType License, and the example font under the
-SIL OFL 1.1. Their license texts are shipped in `dist/*/licenses/`.
+license, FreeType under the FreeType License, and the fonts (Jersey 10 for the score,
+Press Start 2P for the text example) under the SIL OFL 1.1. Their license texts are shipped in `dist/*/licenses/`.
