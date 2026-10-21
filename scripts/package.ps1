@@ -34,8 +34,10 @@ function Copy-Licenses([string[]]$Dirs) {
 $apps = @('starter')
 Build-App 'starter' (Join-Path $Root 'src')
 Copy-Licenses @('SDL3')
-# The starter embeds glyphs baked from Jersey 10 (src/score_font.odin).
-Copy-Item (Join-Path $Root 'assets/fonts/Jersey10-OFL.txt') (Join-Path $licenses 'Jersey10-OFL.txt')
+# The starter embeds glyphs baked from Jersey 10 and Silkscreen (src/*_font.odin).
+foreach ($font in 'Jersey10', 'Silkscreen') {
+    Copy-Item (Join-Path $Root "assets/fonts/$font-OFL.txt") (Join-Path $licenses "$font-OFL.txt")
+}
 if (Test-Feature 'image') {
     $apps += 'images'
     Build-App 'images' (Join-Path $Root 'examples/images')

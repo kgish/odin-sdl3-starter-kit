@@ -26,13 +26,13 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	sdl.SetRenderDrawColor(r, 230, 230, 230, 255) or_return
 	switch g.state {
 	case .Menu:
-		draw_centered_text(r, game.WORLD_HEIGHT / 2 - 12, "ODIN + SDL3 STARTER") or_return
-		draw_centered_text(r, game.WORLD_HEIGHT / 2 + 4, "ENTER: PLAY  ESC: QUIT") or_return
+		draw_centered(&state.menu_font, r, game.WORLD_HEIGHT / 2 - 16, "ODIN + SDL3 STARTER", 2) or_return
+		draw_centered(&state.menu_font, r, game.WORLD_HEIGHT / 2 + 4, "ENTER: PLAY  ESC: QUIT") or_return
 	case .Paused:
 		draw_centered_text(r, game.WORLD_HEIGHT / 2 - 4, "PAUSED (P)") or_return
-		draw_score(&state.score, r, g.score) or_return
+		draw_centered(&state.score_font, r, 4, fmt.tprintf("SCORE %d", g.score)) or_return
 	case .Playing:
-		draw_score(&state.score, r, g.score) or_return
+		draw_centered(&state.score_font, r, 4, fmt.tprintf("SCORE %d", g.score)) or_return
 	}
 
 	if state.ui.show_fps {
@@ -60,13 +60,12 @@ draw_centered_text :: proc(r: ^sdl.Renderer, y: f32, text: cstring) -> bool {
 	return sdl.RenderDebugText(r, (game.WORLD_WIDTH - width) / 2, y, text)
 }
 
-// Draws the score centered at the top in the baked Jersey 10 glyphs.
+// Draws `text` in a baked pixel font, horizontally centered, with its top at `y`.
 @(private = "file")
-draw_score :: proc(st: ^Score_Text, r: ^sdl.Renderer, score: u64) -> bool {
-	text := fmt.tprintf("SCORE %d", score)
+draw_centered :: proc(f: ^Baked_Font, r: ^sdl.Renderer, y: f32, text: string, scale: f32 = 1) -> bool {
 	// Whole world units, so every font pixel lands on the same screen-pixel grid.
-	x := f32(int(game.WORLD_WIDTH - score_text_width(text)) / 2)
-	return score_text_draw(st, r, {x, 4}, text)
+	x := f32(int(game.WORLD_WIDTH - f32(baked_font_width(f, text)) * scale) / 2)
+	return baked_font_draw(f, r, {x, y}, text, scale)
 }
 
 // Draws the measured frame rate in the top-right corner, in world units.

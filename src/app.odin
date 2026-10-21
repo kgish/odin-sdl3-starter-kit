@@ -12,9 +12,9 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window`, `renderer`, `score`, `audio`, `ui` and `background` are
-// created in app_init and destroyed only in app_quit (background, ui, score,
-// audio, renderer, then window). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer`, the baked fonts, `audio`, `ui` and
+// `background` are created in app_init and destroyed only in app_quit
+// (background, ui, fonts, audio, renderer, then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
@@ -23,7 +23,8 @@ App_State :: struct {
 	renderer:  ^sdl.Renderer,
 	audio:     Audio,
 	ui:        Ui,
-	score:     Score_Text,
+	score_font: Baked_Font, // Jersey 10
+	menu_font:  Baked_Font, // Silkscreen
 	// Optional: nil when the image is missing; render then uses the clear color.
 	background: ^sdl.Texture,
 	// Game hit counters already answered with a sound.
@@ -92,7 +93,8 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	if !sdl.SetRenderLogicalPresentation(state.renderer, game.WORLD_WIDTH, game.WORLD_HEIGHT, .LETTERBOX) {
 		log.warnf("SetRenderLogicalPresentation failed: %s", sdl.GetError())
 	}
-	if !score_text_init(&state.score, state.renderer) do return .FAILURE
+	if !baked_font_init(&state.score_font, state.renderer, "score", SCORE_FONT_GLYPHS) do return .FAILURE
+	if !baked_font_init(&state.menu_font, state.renderer, "menu", MENU_FONT_GLYPHS) do return .FAILURE
 	if injected_failure(state, .Renderer) do return .FAILURE
 
 	// Audio (optional: the game still runs without a sound device)
@@ -214,7 +216,8 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	}
 	background_destroy(&state.background)
 	ui_destroy(&state.ui)
-	score_text_destroy(&state.score)
+	baked_font_destroy(&state.menu_font)
+	baked_font_destroy(&state.score_font)
 	audio_close(&state.audio)
 	if state.renderer != nil {
 		sdl.DestroyRenderer(state.renderer)

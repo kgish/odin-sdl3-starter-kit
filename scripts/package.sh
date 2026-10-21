@@ -40,8 +40,8 @@ build_target() {
 targets=(starter)
 build_target starter "$ROOT/src"
 bundle SDL3 SDL3
-# The starter embeds glyphs baked from Jersey 10 (src/score_font.odin).
-cp "$ROOT/assets/fonts/Jersey10-OFL.txt" "$dist/licenses/Jersey10-OFL.txt"
+# The starter embeds glyphs baked from Jersey 10 and Silkscreen (src/*_font.odin).
+cp "$ROOT/assets/fonts/Jersey10-OFL.txt" "$ROOT/assets/fonts/Silkscreen-OFL.txt" "$dist/licenses/"
 if has_feature image; then
 	targets+=(images)
 	build_target images "$ROOT/examples/images"
