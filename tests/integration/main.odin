@@ -38,17 +38,18 @@ Case :: struct {
 }
 
 // What app_quit destroyed, by the last init stage that created something.
-DESTROYED_ALL :: []Count{{"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_TO_AUDIO :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_BOTH :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_WINDOW :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
-DESTROYED_NONE :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
-DESTROYED_MUTED :: []Count{{"destroyed ui atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_ALL :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_TO_AUDIO :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_BOTH :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_WINDOW :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
+DESTROYED_NONE :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
+DESTROYED_NO_BACKGROUND :: []Count{{"destroyed background", 0}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_MUTED :: []Count{{"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
 
 STARTER_CASES := []Case{
 	{
 		"smoke", {"--frames=60"},
-		{0, {"initialized", "audio driver: dummy", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
+		{0, {"initialized", "loaded background 512x288", "audio driver: dummy", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
 	},
 	{
 		"smoke-no-vsync", {"--frames=30", "--no-vsync"},
@@ -68,7 +69,7 @@ STARTER_CASES := []Case{
 	},
 	{
 		"missing-assets", {"--frames=5", "--assets=__missing_asset_dir__"},
-		{0, {"asset directory not found: __missing_asset_dir__", "quit: SUCCESS"}, nil, DESTROYED_ALL},
+		{0, {"asset directory not found: __missing_asset_dir__", "background not loaded", "smoke run complete", "quit: SUCCESS"}, nil, DESTROYED_NO_BACKGROUND},
 	},
 	{
 		"bad-option", {"--definitely-not-an-option"},
@@ -96,7 +97,7 @@ STARTER_CASES := []Case{
 	},
 	{
 		"fail-after-ui", {"--fail-after=ui"},
-		{1, {"injected failure after stage Ui", "quit: FAILURE"}, nil, DESTROYED_ALL},
+		{1, {"injected failure after stage Ui", "quit: FAILURE"}, nil, DESTROYED_NO_BACKGROUND},
 	},
 	{
 		"fail-after-game", {"--fail-after=game"},

@@ -12,8 +12,9 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window`, `renderer`, `audio` and `ui` are created in app_init
-// and destroyed only in app_quit (ui, audio, renderer, then window). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer`, `audio`, `ui` and `background` are created
+// in app_init and destroyed only in app_quit (background, ui, audio, renderer,
+// then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
@@ -22,6 +23,8 @@ App_State :: struct {
 	renderer:  ^sdl.Renderer,
 	audio:     Audio,
 	ui:        Ui,
+	// Optional: nil when the image is missing; render then uses the clear color.
+	background: ^sdl.Texture,
 	// Game hit counters already answered with a sound.
 	bounces_heard:     u64,
 	paddle_hits_heard: u64,
@@ -108,6 +111,7 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	if !os.is_dir(state.asset_dir) {
 		log.warnf("asset directory not found: %s", state.asset_dir)
 	}
+	state.background = background_load(state.renderer, state.asset_dir)
 	state.game = game.game_make(cfg.seed)
 	state.timestep = game.timestep_make(cfg.sim_hz, i64(cfg.max_elapsed_ms) * 1_000_000, cfg.max_updates)
 	if injected_failure(state, .Game) do return .FAILURE
@@ -204,6 +208,7 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	if state == nil {
 		return
 	}
+	background_destroy(&state.background)
 	ui_destroy(&state.ui)
 	audio_close(&state.audio)
 	if state.renderer != nil {

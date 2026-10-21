@@ -35,7 +35,7 @@ hold, which `odin test` worker threads would not guarantee.
 | `smoke-mute` | `--mute`: no audio stream is opened or destroyed |
 | `smoke-tuning` | Tuning panel drawn every frame; `--screenshot` saves the last one |
 | `quit-event` | A pushed `SDL_EVENT_QUIT` ends the app with exit 0 |
-| `missing-assets` | Clear diagnostic, still runs |
+| `missing-assets` | Clear diagnostic (asset directory and background not found), still runs with the plain clear color |
 | `bad-option` | Exit 1, nothing created |
 | `fail-after-<stage>` | Exit 1, only resources created before the failure are destroyed, each once |
 
