@@ -18,10 +18,14 @@ function Build-App([string]$Name, [string]$Src) {
     Invoke-Native $Odin @('build', $Src, '-vet', '-strict-style', '-o:speed', '-subsystem:windows', "-out:$(Join-Path $dist "$Name.exe")")
 }
 
-# Copies every license file a package installed (licenses/<dir>/*) into dist.
+# Copies every license file a package installed into dist. With MSVC, SDL3 and
+# SDL3_ttf install them to licenses/<dir>, SDL3_image to share/licenses/<dir>.
 function Copy-Licenses([string[]]$Dirs) {
     foreach ($dir in $Dirs) {
-        foreach ($file in Get-ChildItem (Join-Path $Prefix "licenses/$dir") -File) {
+        $found = @('licenses', 'share/licenses') | ForEach-Object { Join-Path $Prefix "$_/$dir" } |
+            Where-Object { Test-Path $_ }
+        if (-not $found) { throw "no installed license files for $dir in $Prefix" }
+        foreach ($file in Get-ChildItem $found -File) {
             Copy-Item $file.FullName (Join-Path $licenses "$dir-$($file.Name)")
         }
     }
