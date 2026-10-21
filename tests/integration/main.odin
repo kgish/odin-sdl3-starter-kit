@@ -135,7 +135,8 @@ run_case :: proc(exe, log_dir: string, env: []string, c: Case, release: bool) ->
 	problems := make([dynamic]string, context.temp_allocator)
 
 	log_path := filepath.join({log_dir, fmt.tprintf("%s.log", c.name)}, context.temp_allocator) or_else ""
-	out, create_err := os.create(log_path)
+	// Inheritable: on Windows the child can only write to inherited handles.
+	out, create_err := os.open(log_path, {.Write, .Create, .Trunc, .Inheritable}, os.Permissions_Default_File)
 	if create_err != nil {
 		append(&problems, fmt.tprintf("cannot create %s: %v", log_path, create_err))
 		return problems[:]
