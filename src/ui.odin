@@ -118,7 +118,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 	mu.begin(ctx)
 	defer mu.end(ctx)
 
-	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 222}, {.NO_CLOSE}) {
+	if !mu.begin_window(ctx, "Tuning", {16, 16, 280, 246}, {.NO_CLOSE}) {
 		return
 	}
 	defer mu.end_window(ctx)
@@ -135,6 +135,8 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 
 	mu.label(ctx, "Scroll speed")
 	mu.slider(ctx, &bg.speed, 0, BACKGROUND_SCROLL_MAX, 1, "%.0f")
+	mu.label(ctx, "Bg brightness")
+	mu.slider(ctx, &bg.brightness, 0, 100, 1, "%.0f%%")
 
 	mu.label(ctx, "Current speed")
 	mu.label(ctx, fmt.tprintf("%.0f (x%.2f per paddle hit)", game.game_ball_speed(g^), game.BALL_SPEEDUP))
@@ -145,6 +147,7 @@ ui_update :: proc(ui: ^Ui, g: ^game.Game, bg: ^Background) {
 		t = game.TUNING_DEFAULT
 		changed = true
 		bg.speed = BACKGROUND_SCROLL_SPEED
+		bg.brightness = BACKGROUND_BRIGHTNESS
 	}
 	mu.label(ctx, "F1: hide panel")
 

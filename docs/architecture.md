@@ -120,8 +120,9 @@ font/icon atlas is uploaded once to an SDL texture.
 - `app_iterate` builds the panel (`ui_update`) before the simulation steps.
   Slider changes go through `game.game_set_tuning`, which clamps them to safe
   ranges and applies them, so the game package still knows nothing about the
-  UI. The scroll speed slider edits `Background.speed` directly; it is
-  cosmetic, not simulation state. `background_advance` then accumulates the
+  UI. The scroll speed and brightness sliders edit `Background` directly; they
+  are cosmetic, not simulation state. Brightness is applied as a texture color
+  mod each frame. `background_advance` then accumulates the
   drift from measured frame time, so a speed change never makes the image jump.
 - `render` draws the game in world units and then the panel (`ui_draw`). For
   the panel it turns off logical presentation for the rest of the frame, which

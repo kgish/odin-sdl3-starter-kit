@@ -50,3 +50,12 @@ long_gap_is_clamped :: proc(t: ^testing.T) {
 	background_advance(&bg, 60 * SECOND)
 	testing.expect(t, abs(bg.offset - 2.5) < 0.01, "gap clamped to BACKGROUND_MAX_STEP_NS")
 }
+
+@(test)
+brightness_maps_to_color_mod :: proc(t: ^testing.T) {
+	testing.expect_value(t, background_color_mod(0), 0)
+	testing.expect_value(t, background_color_mod(100), 255)
+	testing.expect_value(t, background_color_mod(43), 110)
+	testing.expect_value(t, background_color_mod(-5), 0)
+	testing.expect_value(t, background_color_mod(250), 255)
+}
