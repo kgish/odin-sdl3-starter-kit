@@ -15,7 +15,7 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	sdl.SetRenderDrawColor(r, 18, 20, 28, 255) or_return
 	sdl.RenderClear(r) or_return
 	if state.background != nil {
-		sdl.RenderTexture(r, state.background, nil, nil) or_return
+		background_draw(r, state.background, sdl.GetTicksNS()) or_return
 	}
 
 	sdl.SetRenderDrawColor(r, 90, 200, 140, 255) or_return
