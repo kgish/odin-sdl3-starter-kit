@@ -13,7 +13,7 @@ odin test src ...       # pure procedures in the executable package (needs SDL l
 | --- | --- |
 | Input | press/held/release transitions, key repeat, taps between steps, no repeat across catch-up steps, focus-loss reset |
 | Timestep | baseline, partial accumulation, 250 ms clamp, update limit and dropped-step accounting, pause/resume reset, non-monotonic time |
-| Game | state-machine transitions, determinism for a seed, paused game does not advance, bodies stay in bounds, interpolation |
+| Game | state-machine transitions, determinism for a seed, paused game does not advance, bodies stay in bounds, interpolation, wall and paddle hits, speed-up and its cap, tuning clamping and persistence |
 | Config | defaults valid, option parsing, unknown/bad/out-of-range options, asset dir relative to the executable, override |
 
 The simulation is deterministic: time, input and the RNG seed are passed in
@@ -32,6 +32,8 @@ hold, which `odin test` worker threads would not guarantee.
 | --- | --- |
 | `smoke` | 60 iterations, exit 0, renderer and window each destroyed exactly once |
 | `smoke-no-vsync` | Fallback pacing path |
+| `smoke-mute` | `--mute`: no audio stream is opened or destroyed |
+| `smoke-tuning` | Tuning panel drawn every frame; `--screenshot` saves the last one |
 | `quit-event` | A pushed `SDL_EVENT_QUIT` ends the app with exit 0 |
 | `missing-assets` | Clear diagnostic, still runs |
 | `bad-option` | Exit 1, nothing created |

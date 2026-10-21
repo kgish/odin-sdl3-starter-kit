@@ -57,6 +57,7 @@ rendering and sound:
 | Enter / Space | Start a round (from the menu), or resume |
 | Arrows / WASD | Move the paddle left, right, up and down |
 | P | Pause / resume |
+| F1 | Show / hide the tuning panel |
 | Esc | Quit (as does closing the window) |
 
 - The ball bounces off the edges of the screen with an 880 Hz beep.
@@ -64,6 +65,11 @@ rendering and sound:
   makes the ball 10 % faster, up to 240 units/s (from 90 at the start of a
   round).
 - The play field is 320×180 world units, letterboxed and scaled to the window.
+- The **tuning panel** (F1, or start with `--tuning`) has sliders for the
+  ball's launch speed, the ball size and the paddle size. Changes apply
+  immediately and carry over to new rounds. It is drawn with Odin's built-in
+  [`vendor:microui`](https://pkg.odin-lang.org/vendor/microui/), so it adds no
+  native dependency; see `src/ui.odin`.
 - Sound is optional. If no audio device opens, the game runs silently;
   `--mute` turns it off.
 
@@ -108,7 +114,9 @@ HarfBuzz, so complex scripts are not shaped. See
 | `--frames=N` | Exit successfully after N iterations (smoke tests) |
 | `--push-quit-at=N` | Push a quit event on iteration N (tests) |
 | `--mute` | Don't open an audio device (no bounce beep) |
-| `--fail-after=STAGE` | Fail init after `metadata`, `video`, `window`, `renderer`, `audio` or `game` (tests) |
+| `--tuning` | Show the tuning panel at startup |
+| `--screenshot=FILE.bmp` | With `--frames`, save the last frame (tests, docs) |
+| `--fail-after=STAGE` | Fail init after `metadata`, `video`, `window`, `renderer`, `audio`, `ui` or `game` (tests) |
 
 ## License
 

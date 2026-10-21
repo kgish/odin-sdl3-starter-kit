@@ -283,6 +283,38 @@ paddle_pushing_a_departing_ball_is_not_a_hit :: proc(t: ^testing.T) {
 }
 
 @(test)
+tuning_is_clamped_and_applied_now :: proc(t: ^testing.T) {
+	g := game_make(1)
+	game_set_tuning(&g, {ball_speed = 1000, ball_size = 0, player_size = 30})
+	testing.expect_value(t, g.tuning, Tuning{BALL_MAX_SPEED, BALL_SIZE_MIN, 30})
+	testing.expect_value(t, g.ball.size, BALL_SIZE_MIN)
+	testing.expect_value(t, g.player.size, 30)
+	testing.expect(t, abs(game_ball_speed(g) - BALL_MAX_SPEED) < 0.001)
+}
+
+@(test)
+tuning_speed_keeps_direction_and_survives_new_round :: proc(t: ^testing.T) {
+	g := game_make(1)
+	dir := linalg.normalize(g.ball.vel)
+	game_set_tuning(&g, {ball_speed = 150, ball_size = 10, player_size = 20})
+	testing.expect(t, linalg.length(linalg.normalize(g.ball.vel) - dir) < 0.001)
+
+	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60) // starts a new round
+	testing.expect(t, abs(game_ball_speed(g) - 150) < 0.001)
+	testing.expect_value(t, g.ball.size, 10)
+	testing.expect_value(t, g.player.size, 20)
+}
+
+@(test)
+growing_bodies_stay_in_world :: proc(t: ^testing.T) {
+	g := game_make(1)
+	g.player.pos = {1 + PLAYER_SIZE / 2, WORLD_HEIGHT - PLAYER_SIZE / 2}
+	game_set_tuning(&g, {ball_speed = BALL_SPEED, ball_size = BALL_SIZE, player_size = PLAYER_SIZE_MAX})
+	half: f32 = PLAYER_SIZE_MAX / 2
+	testing.expect_value(t, g.player.pos, [2]f32{half, WORLD_HEIGHT - half})
+}
+
+@(test)
 render_position_interpolates :: proc(t: ^testing.T) {
 	b := Body{prev_pos = {0, 0}, pos = {10, 20}}
 	testing.expect_value(t, body_render_pos(b, 0), [2]f32{0, 0})

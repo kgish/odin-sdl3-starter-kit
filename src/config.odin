@@ -13,6 +13,7 @@ Init_Stage :: enum u8 {
 	Window,
 	Renderer,
 	Audio,
+	Ui,
 	Game,
 }
 
@@ -25,6 +26,8 @@ Config :: struct {
 	vsync:          bool,
 	// Beep when the ball bounces. Off with --mute.
 	sound:          bool,
+	// Show the tuning panel at startup (F1 toggles it).
+	show_tuning:    bool,
 	// Callback rate used when vsync is disabled or unavailable.
 	fallback_hz:    int,
 	seed:           u64,
@@ -32,6 +35,8 @@ Config :: struct {
 	smoke_frames:   int,
 	push_quit_at:   int,
 	fail_after:     Init_Stage,
+	// Save the last --frames frame as a BMP. Borrowed from argv.
+	screenshot:     string,
 	// Development override for the asset directory. Borrowed from argv.
 	asset_dir:      string,
 }
@@ -71,6 +76,8 @@ config_parse :: proc(args: []string) -> (cfg: Config, err: Config_Error, bad: st
 		case "--sim-hz":       cfg.sim_hz, ok = strconv.parse_int(value)
 		case "--no-vsync":     cfg.vsync = false
 		case "--mute":         cfg.sound = false
+		case "--tuning":       cfg.show_tuning = true
+		case "--screenshot":   cfg.screenshot = value; ok = value != ""
 		case "--assets":       cfg.asset_dir = value; ok = value != ""
 		case "--fail-after":   cfg.fail_after, ok = parse_stage(value)
 		case:
@@ -115,6 +122,7 @@ parse_stage :: proc(s: string) -> (Init_Stage, bool) {
 	case "window":   return .Window, true
 	case "renderer": return .Renderer, true
 	case "audio":    return .Audio, true
+	case "ui":       return .Ui, true
 	case "game":     return .Game, true
 	}
 	return .None, false

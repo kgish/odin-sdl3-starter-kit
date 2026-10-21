@@ -34,7 +34,8 @@ and `.FAILURE`.
 | `asset_dir` string | `app_init` | `app_quit` |
 | `^sdl.Window` | `app_init` (Window stage) | `app_quit`, after the renderer |
 | `^sdl.Renderer` | `app_init` (Renderer stage) | `app_quit`, after the audio stream |
-| `^sdl.AudioStream` + beep samples | `audio_open` (Audio stage); optional | `audio_close`, first in `app_quit` |
+| `^sdl.AudioStream` + beep samples | `audio_open` (Audio stage); optional | `audio_close`, after the UI atlas |
+| microui context + atlas `^sdl.Texture` | `ui_init` (Ui stage) | `ui_destroy`, first in `app_quit` |
 | SDL subsystems | `sdl.Init` / `sdl.InitSubSystem` in `app_init` | SDL, after `app_quit` returns |
 
 `app_quit` runs exactly once, also after a failed `app_init`, and checks each
@@ -105,6 +106,25 @@ them on every put. If the stream already holds more than 100 ms of
 sound, the beep is skipped, so beeps can't pile up. Sound is optional: if no
 audio device opens, the app logs a warning and runs silently, and `--mute`
 skips audio entirely.
+
+## Tuning panel (`src/ui.odin`)
+
+A debug panel built with `vendor:microui`, which ships with Odin and is pure
+Odin, so it adds no native library. Its context lives in `App_State`. Its
+font/icon atlas is uploaded once to an SDL texture.
+
+- `app_event` forwards mouse events to microui while the panel is visible. F1
+  toggles it and is handled before game key bindings.
+- `app_iterate` builds the panel (`ui_update`) before the simulation steps.
+  Slider changes go through `game.game_set_tuning`, which clamps them to safe
+  ranges and applies them, so the game package still knows nothing about the
+  UI.
+- `render` draws the game in world units and then the panel (`ui_draw`). For
+  the panel it turns off logical presentation for the rest of the frame, which
+  SDL allows. It scales by the window's pixel density, so the panel is sharp
+  and its coordinates match mouse event coordinates on high-DPI displays.
+
+Delete `src/ui.odin` and its few call sites to drop the panel.
 
 ## Optional examples (`examples/`)
 

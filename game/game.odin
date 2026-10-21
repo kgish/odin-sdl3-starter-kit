@@ -18,6 +18,23 @@ BALL_SPEED   :: 90  // at the start of each round
 BALL_SPEEDUP   :: 1.1
 BALL_MAX_SPEED :: 240
 
+// Ranges accepted by game_set_tuning. With the smallest ball and paddle the
+// overlap span is (2 + 4) units, still more than BALL_MAX_SPEED moves per step.
+BALL_MIN_SPEED  :: 20
+BALL_SIZE_MIN   :: 2
+BALL_SIZE_MAX   :: 24
+PLAYER_SIZE_MIN :: 4
+PLAYER_SIZE_MAX :: 48
+
+// Adjustable parameters (the tuning panel edits these).
+Tuning :: struct {
+	ball_speed:  f32, // launch speed of each round, before paddle speed-ups
+	ball_size:   f32,
+	player_size: f32,
+}
+
+TUNING_DEFAULT :: Tuning{ball_speed = BALL_SPEED, ball_size = BALL_SIZE, player_size = PLAYER_SIZE}
+
 State :: enum u8 {
 	Menu,
 	Playing,
@@ -38,6 +55,7 @@ Game :: struct {
 	rng:    rand.Default_Random_State,
 	player: Body,
 	ball:   Body,
+	tuning: Tuning,
 	// Times the ball has hit a world edge or the player's paddle. They only
 	// ever increase, so the platform layer can compare them across
 	// iterations to trigger sounds.
@@ -47,7 +65,7 @@ Game :: struct {
 
 // Creates a game whose behaviour depends only on `seed` and the inputs fed to update.
 game_make :: proc(seed: u64) -> Game {
-	g := Game{seed = seed, rng = rand.create(seed)}
+	g := Game{seed = seed, rng = rand.create(seed), tuning = TUNING_DEFAULT}
 	game_reset_round(&g)
 	return g
 }
@@ -55,17 +73,43 @@ game_make :: proc(seed: u64) -> Game {
 game_reset_round :: proc(g: ^Game) {
 	gen := rand.default_random_generator(&g.rng)
 
-	g.player = Body{size = PLAYER_SIZE}
+	g.player = Body{size = g.tuning.player_size}
 	g.player.pos = {WORLD_WIDTH / 2, WORLD_HEIGHT / 2}
 	g.player.prev_pos = g.player.pos
 
 	angle := rand.float32_range(0.2, 1.2, gen) // avoid near-axis launches
 	sx: f32 = 1 if rand.int_max(2, gen) == 0 else -1
 	sy: f32 = 1 if rand.int_max(2, gen) == 0 else -1
-	g.ball = Body{size = BALL_SIZE}
+	g.ball = Body{size = g.tuning.ball_size}
 	g.ball.pos = {WORLD_WIDTH / 4, WORLD_HEIGHT / 4}
 	g.ball.prev_pos = g.ball.pos
-	g.ball.vel = {sx * linalg.cos(angle), sy * linalg.sin(angle)} * BALL_SPEED
+	g.ball.vel = {sx * linalg.cos(angle), sy * linalg.sin(angle)} * g.tuning.ball_speed
+}
+
+// Clamps `t` to the accepted ranges and applies it immediately: sizes change
+// now (bodies are kept inside the world), and a new launch speed also
+// rescales the ball's current speed, keeping its direction.
+game_set_tuning :: proc(g: ^Game, t: Tuning) {
+	t := t
+	t.ball_speed = clamp(t.ball_speed, BALL_MIN_SPEED, BALL_MAX_SPEED)
+	t.ball_size = clamp(t.ball_size, BALL_SIZE_MIN, BALL_SIZE_MAX)
+	t.player_size = clamp(t.player_size, PLAYER_SIZE_MIN, PLAYER_SIZE_MAX)
+
+	if t.ball_speed != g.tuning.ball_speed {
+		if speed := linalg.length(g.ball.vel); speed > 0 {
+			g.ball.vel *= t.ball_speed / speed
+		}
+	}
+	g.tuning = t
+	g.ball.size = t.ball_size
+	g.player.size = t.player_size
+	clamp_to_world(&g.ball)
+	clamp_to_world(&g.player)
+}
+
+// Current speed of the ball in world units per second.
+game_ball_speed :: proc(g: Game) -> f32 {
+	return linalg.length(g.ball.vel)
 }
 
 // Applies one state-machine transition for the given step input.

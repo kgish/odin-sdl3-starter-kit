@@ -37,10 +37,13 @@ Case :: struct {
 	expect: Expect,
 }
 
-DESTROYED_ALL :: []Count{{"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_BOTH :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_WINDOW :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
-DESTROYED_NONE :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
+// What app_quit destroyed, by the last init stage that created something.
+DESTROYED_ALL :: []Count{{"destroyed ui atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_TO_AUDIO :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_BOTH :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_WINDOW :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
+DESTROYED_NONE :: []Count{{"destroyed ui atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
+DESTROYED_MUTED :: []Count{{"destroyed ui atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
 
 STARTER_CASES := []Case{
 	{
@@ -53,7 +56,11 @@ STARTER_CASES := []Case{
 	},
 	{
 		"smoke-mute", {"--frames=10", "--mute"},
-		{0, {"audio disabled (--mute)", "quit: SUCCESS"}, {"audio driver"}, DESTROYED_BOTH},
+		{0, {"audio disabled (--mute)", "quit: SUCCESS"}, {"audio driver"}, DESTROYED_MUTED},
+	},
+	{
+		"smoke-tuning", {"--frames=30", "--tuning", "--screenshot=tuning.bmp"},
+		{0, {"tuning panel shown", "saved screenshot tuning.bmp", "smoke run complete after 30 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
 	},
 	{
 		"quit-event", {"--push-quit-at=3", "--frames=600"},
@@ -85,7 +92,11 @@ STARTER_CASES := []Case{
 	},
 	{
 		"fail-after-audio", {"--fail-after=audio"},
-		{1, {"injected failure after stage Audio", "quit: FAILURE"}, nil, DESTROYED_ALL},
+		{1, {"injected failure after stage Audio", "quit: FAILURE"}, nil, DESTROYED_TO_AUDIO},
+	},
+	{
+		"fail-after-ui", {"--fail-after=ui"},
+		{1, {"injected failure after stage Ui", "quit: FAILURE"}, nil, DESTROYED_ALL},
 	},
 	{
 		"fail-after-game", {"--fail-after=game"},

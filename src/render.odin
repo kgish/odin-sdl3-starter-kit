@@ -1,5 +1,7 @@
 package main
 
+import "core:log"
+import "core:strings"
 import "../game"
 import sdl "vendor:sdl3"
 
@@ -27,6 +29,10 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	case .Playing:
 	}
 
+	ui_draw(&state.ui, r, state.window) or_return
+	if state.cfg.screenshot != "" && state.frames == state.cfg.smoke_frames {
+		save_screenshot(r, state.cfg.screenshot)
+	}
 	return sdl.RenderPresent(r)
 }
 
@@ -42,4 +48,21 @@ draw_body :: proc(r: ^sdl.Renderer, body: game.Body, alpha: f32) -> bool {
 draw_centered_text :: proc(r: ^sdl.Renderer, y: f32, text: cstring) -> bool {
 	width := f32(len(text) * sdl.DEBUG_TEXT_FONT_CHARACTER_SIZE)
 	return sdl.RenderDebugText(r, (game.WORLD_WIDTH - width) / 2, y, text)
+}
+
+// Saves the frame drawn so far (before present) as a BMP, for tests and docs.
+// Failure is logged, not fatal.
+@(private = "file")
+save_screenshot :: proc(r: ^sdl.Renderer, path: string) {
+	surface := sdl.RenderReadPixels(r, nil)
+	if surface == nil {
+		log.errorf("RenderReadPixels failed: %s", sdl.GetError())
+		return
+	}
+	defer sdl.DestroySurface(surface)
+	if !sdl.SaveBMP(surface, strings.clone_to_cstring(path, context.temp_allocator)) {
+		log.errorf("SaveBMP failed: %s", sdl.GetError())
+		return
+	}
+	log.infof("saved screenshot %s", path)
 }

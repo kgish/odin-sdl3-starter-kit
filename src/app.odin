@@ -12,8 +12,8 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window`, `renderer` and `audio` are created in app_init and
-// destroyed only in app_quit (audio, renderer, then window). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer`, `audio` and `ui` are created in app_init
+// and destroyed only in app_quit (ui, audio, renderer, then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
@@ -21,6 +21,7 @@ App_State :: struct {
 	window:    ^sdl.Window,
 	renderer:  ^sdl.Renderer,
 	audio:     Audio,
+	ui:        Ui,
 	// Game hit counters already answered with a sound.
 	bounces_heard:     u64,
 	paddle_hits_heard: u64,
@@ -97,6 +98,11 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	}
 	if injected_failure(state, .Audio) do return .FAILURE
 
+	// Debug UI (tuning panel, toggled with F1)
+	if !ui_init(&state.ui, state.renderer) do return .FAILURE
+	if cfg.show_tuning do ui_set_visible(&state.ui, true)
+	if injected_failure(state, .Ui) do return .FAILURE
+
 	// Game
 	state.asset_dir = resolve_asset_dir(string(sdl.GetBasePath()), cfg.asset_dir)
 	if !os.is_dir(state.asset_dir) {
@@ -127,6 +133,7 @@ app_iterate :: proc(state: ^App_State) -> sdl.AppResult {
 		// Nothing is visible and vsync may not block while minimized.
 		sdl.DelayNS(10_000_000)
 	} else {
+		ui_update(&state.ui, &state.game)
 		steps := game.timestep_advance(&state.timestep, sdl.GetTicksNS())
 		dt := game.timestep_dt(state.timestep)
 		for _ in 0 ..< steps {
@@ -170,7 +177,13 @@ app_event :: proc(state: ^App_State, event: ^sdl.Event) -> sdl.AppResult {
 			log.info("quit requested (escape)")
 			return .SUCCESS
 		}
+		if event.key.scancode == UI_TOGGLE_KEY && event.key.down && !event.key.repeat {
+			ui_set_visible(&state.ui, !state.ui.visible)
+			return .CONTINUE
+		}
 		handle_key(&state.input, event.key)
+	case .MOUSE_MOTION, .MOUSE_BUTTON_DOWN, .MOUSE_BUTTON_UP, .MOUSE_WHEEL:
+		ui_handle_event(&state.ui, event)
 	case .WINDOW_FOCUS_LOST:
 		game.input_reset(&state.input)
 	case .WINDOW_MINIMIZED, .WINDOW_HIDDEN:
@@ -191,6 +204,7 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	if state == nil {
 		return
 	}
+	ui_destroy(&state.ui)
 	audio_close(&state.audio)
 	if state.renderer != nil {
 		sdl.DestroyRenderer(state.renderer)
