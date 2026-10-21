@@ -17,9 +17,11 @@ $Odin    = Join-Path $OdinDir 'odin.exe'
 
 function Write-Step([string]$Message) { Write-Host "==> $Message" }
 
+# Output goes to the host, not the pipeline: otherwise it would become part of
+# the return value of whichever function called Invoke-Native.
 function Invoke-Native {
     param([Parameter(Mandatory)][string]$Exe, [string[]]$Arguments = @())
-    & $Exe @Arguments
+    & $Exe @Arguments | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "$Exe exited with code $LASTEXITCODE" }
 }
 
