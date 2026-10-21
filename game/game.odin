@@ -33,6 +33,9 @@ Game :: struct {
 	rng:    rand.Default_Random_State,
 	player: Body,
 	ball:   Body,
+	// Times the ball has hit a world edge. Only ever increases, so the
+	// platform layer can compare it across iterations to trigger sounds.
+	bounces: u64,
 }
 
 // Creates a game whose behaviour depends only on `seed` and the inputs fed to update.
@@ -99,7 +102,9 @@ game_update :: proc(g: ^Game, input: Step_Input, dt: f32) {
 	clamp_to_world(&g.player)
 
 	g.ball.pos += g.ball.vel * dt
-	bounce_in_world(&g.ball)
+	if bounce_in_world(&g.ball) {
+		g.bounces += 1
+	}
 }
 
 // Position to draw a body at, blending the last two steps by `alpha`.
@@ -114,14 +119,19 @@ clamp_to_world :: proc(b: ^Body) {
 	b.pos.y = clamp(b.pos.y, half, WORLD_HEIGHT - half)
 }
 
+// Reflects `b` off the world edges. Returns true if it hit one (a corner
+// counts as a single hit).
 @(private)
-bounce_in_world :: proc(b: ^Body) {
+bounce_in_world :: proc(b: ^Body) -> (hit: bool) {
 	half := b.size / 2
 	if b.pos.x < half || b.pos.x > WORLD_WIDTH - half {
 		b.vel.x = -b.vel.x
+		hit = true
 	}
 	if b.pos.y < half || b.pos.y > WORLD_HEIGHT - half {
 		b.vel.y = -b.vel.y
+		hit = true
 	}
 	clamp_to_world(b)
+	return
 }

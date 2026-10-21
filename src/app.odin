@@ -12,14 +12,17 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window` and `renderer` are created in app_init and destroyed only
-// in app_quit (renderer first). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer` and `audio` are created in app_init and
+// destroyed only in app_quit (audio, renderer, then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
 	asset_dir: string,
 	window:    ^sdl.Window,
 	renderer:  ^sdl.Renderer,
+	audio:     Audio,
+	// game.bounces already answered with a beep.
+	bounces_heard: u64,
 	input:     game.Input,
 	timestep:  game.Timestep,
 	game:      game.Game,
@@ -85,6 +88,14 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	}
 	if injected_failure(state, .Renderer) do return .FAILURE
 
+	// Audio (optional: the game still runs without a sound device)
+	if cfg.sound {
+		audio_open(&state.audio)
+	} else {
+		log.info("audio disabled (--mute)")
+	}
+	if injected_failure(state, .Audio) do return .FAILURE
+
 	// Game
 	state.asset_dir = resolve_asset_dir(string(sdl.GetBasePath()), cfg.asset_dir)
 	if !os.is_dir(state.asset_dir) {
@@ -119,6 +130,11 @@ app_iterate :: proc(state: ^App_State) -> sdl.AppResult {
 		dt := game.timestep_dt(state.timestep)
 		for _ in 0 ..< steps {
 			game.game_update(&state.game, game.input_consume(&state.input), dt)
+		}
+		// One beep per iteration, however many bounces the steps produced.
+		if state.game.bounces != state.bounces_heard {
+			state.bounces_heard = state.game.bounces
+			audio_beep(&state.audio)
 		}
 		if state.timestep.dropped_steps != state.dropped_reported {
 			log.debugf("overloaded: dropped %v steps total", state.timestep.dropped_steps)
@@ -169,6 +185,7 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	if state == nil {
 		return
 	}
+	audio_close(&state.audio)
 	if state.renderer != nil {
 		sdl.DestroyRenderer(state.renderer)
 		state.renderer = nil

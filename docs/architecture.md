@@ -33,8 +33,9 @@ and `.FAILURE`.
 | `App_State` (heap) | first line of `app_init`, published to `appstate` immediately | `app_quit` (`free`) |
 | `asset_dir` string | `app_init` | `app_quit` |
 | `^sdl.Window` | `app_init` (Window stage) | `app_quit`, after the renderer |
-| `^sdl.Renderer` | `app_init` (Renderer stage) | `app_quit`, first |
-| SDL subsystems | `sdl.Init` in `app_init` | SDL, after `app_quit` returns |
+| `^sdl.Renderer` | `app_init` (Renderer stage) | `app_quit`, after the audio stream |
+| `^sdl.AudioStream` + beep samples | `audio_open` (Audio stage); optional | `audio_close`, first in `app_quit` |
+| SDL subsystems | `sdl.Init` / `sdl.InitSubSystem` in `app_init` | SDL, after `app_quit` returns |
 
 `app_quit` runs exactly once, also after a failed `app_init`, and checks each
 handle before destroying it, so partial initialization is safe. The
@@ -54,7 +55,9 @@ Each `app_iterate` call:
    slows down instead of spiralling, and are counted.
 2. Runs that many `game_update` calls. Each consumes one `Step_Input`, so a
    press is seen by exactly one step, even when 0 or several steps run.
-3. Renders, interpolating bodies between their previous and current position
+3. Plays a beep if the game's `bounces` counter went up during those steps
+   (at most one beep per iteration).
+4. Renders, interpolating bodies between their previous and current position
    by the leftover fraction.
 
 Pacing uses vsync when the renderer supports it. Otherwise
@@ -82,6 +85,18 @@ The app uses no worker threads, and only SDL's main-thread event pump calls
 `app_event`. If you add workers, send their owned results through a bounded,
 synchronized queue and drain it in `app_iterate`. Do not push SDL events that
 mutate `App_State` from other threads.
+
+## Sound (`src/audio.odin`)
+
+The game package knows nothing about sound: it only counts how often the ball
+hits a world edge (`Game.bounces`). After the simulation steps of an
+iteration, `app_iterate` compares that counter with the last value it answered
+and queues a beep on an SDL audio device stream. The beep is a 60 ms, 880 Hz
+sine tone with a short fade-in and fade-out, generated once at startup, and
+SDL copies it on every put. If the stream already holds more than 100 ms of
+sound, the beep is skipped, so beeps can't pile up. Sound is optional: if no
+audio device opens, the app logs a warning and runs silently, and `--mute`
+skips audio entirely.
 
 ## Optional examples (`examples/`)
 

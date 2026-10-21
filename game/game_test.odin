@@ -196,6 +196,29 @@ bodies_stay_in_world :: proc(t: ^testing.T) {
 }
 
 @(test)
+bounces_are_counted_once_per_hit :: proc(t: ^testing.T) {
+	g := game_make(1)
+	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
+	g.ball.pos = {WORLD_WIDTH - BALL_SIZE, WORLD_HEIGHT / 2}
+	g.ball.vel = {BALL_SPEED, 0}
+
+	game_update(&g, {}, 1.0 / 60) // still inside
+	testing.expect_value(t, g.bounces, 0)
+	for _ in 0 ..< 3 {
+		game_update(&g, {}, 1.0 / 60)
+	}
+	testing.expect_value(t, g.bounces, 1) // hit the right edge once, now moving away
+	testing.expect(t, g.ball.vel.x < 0)
+
+	game_update(&g, {pressed = {.Pause}}, 1.0 / 60)
+	g.ball.pos = {BALL_SIZE / 2, WORLD_HEIGHT / 2}
+	for _ in 0 ..< 10 {
+		game_update(&g, {}, 1.0 / 60)
+	}
+	testing.expect_value(t, g.bounces, 1) // paused: no movement, no bounces
+}
+
+@(test)
 render_position_interpolates :: proc(t: ^testing.T) {
 	b := Body{prev_pos = {0, 0}, pos = {10, 20}}
 	testing.expect_value(t, body_render_pos(b, 0), [2]f32{0, 0})

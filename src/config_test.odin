@@ -10,12 +10,13 @@ defaults_are_valid :: proc(t: ^testing.T) {
 
 @(test)
 parses_options :: proc(t: ^testing.T) {
-	cfg, err, _ := config_parse({"--frames=10", "--seed=99", "--no-vsync", "--fail-after=renderer", "--assets=/data"})
+	cfg, err, _ := config_parse({"--frames=10", "--seed=99", "--no-vsync", "--mute", "--fail-after=audio", "--assets=/data"})
 	testing.expect_value(t, err, Config_Error.None)
 	testing.expect_value(t, cfg.smoke_frames, 10)
 	testing.expect_value(t, cfg.seed, 99)
 	testing.expect_value(t, cfg.vsync, false)
-	testing.expect_value(t, cfg.fail_after, Init_Stage.Renderer)
+	testing.expect_value(t, cfg.sound, false)
+	testing.expect_value(t, cfg.fail_after, Init_Stage.Audio)
 	testing.expect_value(t, cfg.asset_dir, "/data")
 }
 

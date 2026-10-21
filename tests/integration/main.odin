@@ -37,26 +37,31 @@ Case :: struct {
 	expect: Expect,
 }
 
-DESTROYED_BOTH :: []Count{{"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_WINDOW :: []Count{{"destroyed renderer", 0}, {"destroyed window", 1}}
-DESTROYED_NONE :: []Count{{"destroyed renderer", 0}, {"destroyed window", 0}}
+DESTROYED_ALL :: []Count{{"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_BOTH :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_WINDOW :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
+DESTROYED_NONE :: []Count{{"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
 
 STARTER_CASES := []Case{
 	{
 		"smoke", {"--frames=60"},
-		{0, {"initialized", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_BOTH},
+		{0, {"initialized", "audio driver: dummy", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
 	},
 	{
 		"smoke-no-vsync", {"--frames=30", "--no-vsync"},
-		{0, {"Hz callback rate", "quit: SUCCESS"}, nil, DESTROYED_BOTH},
+		{0, {"Hz callback rate", "quit: SUCCESS"}, nil, DESTROYED_ALL},
+	},
+	{
+		"smoke-mute", {"--frames=10", "--mute"},
+		{0, {"audio disabled (--mute)", "quit: SUCCESS"}, {"audio driver"}, DESTROYED_BOTH},
 	},
 	{
 		"quit-event", {"--push-quit-at=3", "--frames=600"},
-		{0, {"quit requested", "quit: SUCCESS"}, {"smoke run complete"}, DESTROYED_BOTH},
+		{0, {"quit requested", "quit: SUCCESS"}, {"smoke run complete"}, DESTROYED_ALL},
 	},
 	{
 		"missing-assets", {"--frames=5", "--assets=__missing_asset_dir__"},
-		{0, {"asset directory not found: __missing_asset_dir__", "quit: SUCCESS"}, nil, DESTROYED_BOTH},
+		{0, {"asset directory not found: __missing_asset_dir__", "quit: SUCCESS"}, nil, DESTROYED_ALL},
 	},
 	{
 		"bad-option", {"--definitely-not-an-option"},
@@ -79,8 +84,12 @@ STARTER_CASES := []Case{
 		{1, {"injected failure after stage Renderer", "quit: FAILURE"}, nil, DESTROYED_BOTH},
 	},
 	{
+		"fail-after-audio", {"--fail-after=audio"},
+		{1, {"injected failure after stage Audio", "quit: FAILURE"}, nil, DESTROYED_ALL},
+	},
+	{
 		"fail-after-game", {"--fail-after=game"},
-		{1, {"injected failure after stage Game", "quit: FAILURE"}, {"initialized"}, DESTROYED_BOTH},
+		{1, {"injected failure after stage Game", "quit: FAILURE"}, {"initialized"}, DESTROYED_ALL},
 	},
 }
 

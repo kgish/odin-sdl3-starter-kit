@@ -12,6 +12,7 @@ Init_Stage :: enum u8 {
 	Video,
 	Window,
 	Renderer,
+	Audio,
 	Game,
 }
 
@@ -22,6 +23,8 @@ Config :: struct {
 	max_elapsed_ms: int,
 	max_updates:    int,
 	vsync:          bool,
+	// Beep when the ball bounces. Off with --mute.
+	sound:          bool,
 	// Callback rate used when vsync is disabled or unavailable.
 	fallback_hz:    int,
 	seed:           u64,
@@ -48,6 +51,7 @@ config_default :: proc() -> Config {
 		max_elapsed_ms = 250,
 		max_updates    = 5,
 		vsync          = true,
+		sound          = true,
 		fallback_hz    = 120,
 		seed           = 0x5eed,
 	}
@@ -66,6 +70,7 @@ config_parse :: proc(args: []string) -> (cfg: Config, err: Config_Error, bad: st
 		case "--seed":         cfg.seed, ok = strconv.parse_u64(value)
 		case "--sim-hz":       cfg.sim_hz, ok = strconv.parse_int(value)
 		case "--no-vsync":     cfg.vsync = false
+		case "--mute":         cfg.sound = false
 		case "--assets":       cfg.asset_dir = value; ok = value != ""
 		case "--fail-after":   cfg.fail_after, ok = parse_stage(value)
 		case:
@@ -109,6 +114,7 @@ parse_stage :: proc(s: string) -> (Init_Stage, bool) {
 	case "video":    return .Video, true
 	case "window":   return .Window, true
 	case "renderer": return .Renderer, true
+	case "audio":    return .Audio, true
 	case "game":     return .Game, true
 	}
 	return .None, false

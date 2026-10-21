@@ -81,7 +81,8 @@ HarfBuzz, so complex scripts are not shaped. See
 | `--assets=DIR` | Override the asset directory (default: `assets` next to the executable) |
 | `--frames=N` | Exit successfully after N iterations (smoke tests) |
 | `--push-quit-at=N` | Push a quit event on iteration N (tests) |
-| `--fail-after=STAGE` | Fail init after `metadata`, `video`, `window`, `renderer` or `game` (tests) |
+| `--mute` | Don't open an audio device (no bounce beep) |
+| `--fail-after=STAGE` | Fail init after `metadata`, `video`, `window`, `renderer`, `audio` or `game` (tests) |
 
 ## License
 
