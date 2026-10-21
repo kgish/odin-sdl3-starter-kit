@@ -1,5 +1,6 @@
 package game
 
+import "core:math/linalg"
 import "core:testing"
 
 STEP_NS :: NS_PER_SECOND / 60
@@ -234,12 +235,36 @@ ball_reflects_off_paddle :: proc(t: ^testing.T) {
 	testing.expect_value(t, g.paddle_hits, 1)
 	testing.expect_value(t, g.bounces, bounces) // not a wall hit
 	testing.expect(t, g.ball.vel.x > 0)
+	testing.expect(t, abs(linalg.length(g.ball.vel) - BALL_SPEED * BALL_SPEEDUP) < 0.001)
 	testing.expect(t, g.ball.pos.x >= g.player.pos.x + reach) // pushed clear
 
 	for _ in 0 ..< 5 {
 		game_update(&g, {}, 1.0 / 60)
 	}
 	testing.expect_value(t, g.paddle_hits, 1) // separating: no repeat hits
+}
+
+@(test)
+speed_up_keeps_direction_and_is_capped :: proc(t: ^testing.T) {
+	vel := [2]f32{30, 40} // speed 50
+	faster := speed_up(vel)
+	testing.expect(t, abs(linalg.length(faster) - 50 * BALL_SPEEDUP) < 0.001)
+	testing.expect(t, abs(faster.x / faster.y - 0.75) < 0.001)
+
+	for _ in 0 ..< 100 {
+		vel = speed_up(vel)
+	}
+	testing.expect(t, abs(linalg.length(vel) - BALL_MAX_SPEED) < 0.001)
+	testing.expect_value(t, speed_up({0, 0}), [2]f32{0, 0})
+}
+
+@(test)
+new_round_resets_ball_speed :: proc(t: ^testing.T) {
+	g := game_make(1)
+	game_update(&g, {pressed = {.Confirm}}, 1.0 / 60)
+	g.ball.vel = speed_up(speed_up(g.ball.vel))
+	game_reset_round(&g)
+	testing.expect(t, abs(linalg.length(g.ball.vel) - BALL_SPEED) < 0.001)
 }
 
 @(test)

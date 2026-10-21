@@ -11,7 +11,12 @@ WORLD_HEIGHT :: 180
 PLAYER_SIZE  :: 12
 PLAYER_SPEED :: 120 // world units per second
 BALL_SIZE    :: 6
-BALL_SPEED   :: 90
+BALL_SPEED   :: 90  // at the start of each round
+// Each paddle hit multiplies the ball's speed, up to a cap. The cap keeps the
+// per-step movement (240/60 = 4 units) well below the ball + paddle overlap
+// span, so the ball cannot skip through the paddle in one step.
+BALL_SPEEDUP   :: 1.1
+BALL_MAX_SPEED :: 240
 
 State :: enum u8 {
 	Menu,
@@ -109,6 +114,7 @@ game_update :: proc(g: ^Game, input: Step_Input, dt: f32) {
 	}
 	if bounce_off_body(&g.ball, g.player) {
 		g.paddle_hits += 1
+		g.ball.vel = speed_up(g.ball.vel)
 		// The paddle may have pushed the ball against a wall.
 		clamp_to_world(&g.ball)
 	}
@@ -163,4 +169,14 @@ bounce_off_body :: proc(b: ^Body, paddle: Body) -> (hit: bool) {
 		hit = true
 	}
 	return
+}
+
+// Velocity `vel` made BALL_SPEEDUP times faster, but no faster than BALL_MAX_SPEED.
+@(private)
+speed_up :: proc(vel: [2]f32) -> [2]f32 {
+	speed := linalg.length(vel)
+	if speed == 0 {
+		return vel
+	}
+	return vel * (min(speed * BALL_SPEEDUP, BALL_MAX_SPEED) / speed)
 }

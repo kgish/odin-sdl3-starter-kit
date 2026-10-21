@@ -80,7 +80,9 @@ The example has a `Menu` → `Playing` ⇄ `Paused` state machine, a player squa
 (the paddle) and a ball whose launch direction comes from a seeded RNG. The
 ball reflects off the world edges and off the paddle; for the paddle it is
 pushed out along the axis of least overlap, and only counts as a hit when it
-was moving towards the paddle. The package has no
+was moving towards the paddle. Each paddle hit makes the ball 10 % faster, up
+to a cap that keeps it from passing through the paddle in a single step, and a
+new round resets its speed. The package has no
 SDL import, so it can be unit-tested and replaced freely.
 
 ## Threads

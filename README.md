@@ -47,11 +47,37 @@ scripts/package.ps1
 | `deps.lock.json` | Exact Odin, SDL3 and optional-library versions, commits, checksums and build options |
 | `docs/` | [Architecture](docs/architecture.md), [dependencies](docs/dependencies.md), [testing](docs/testing.md) |
 
+## The example game
+
+A small paddle-and-ball toy that exercises input, fixed-step simulation,
+rendering and sound:
+
+| Key | Action |
+| --- | --- |
+| Enter / Space | Start a round (from the menu), or resume |
+| Arrows / WASD | Move the paddle left, right, up and down |
+| P | Pause / resume |
+| Esc | Quit (as does closing the window) |
+
+- The ball bounces off the edges of the screen with an 880 Hz beep.
+- It also bounces off the paddle, with a higher 1760 Hz beep. Each paddle hit
+  makes the ball 10 % faster, up to 240 units/s (from 90 at the start of a
+  round).
+- The play field is 320×180 world units, letterboxed and scaled to the window.
+- Sound is optional. If no audio device opens, the game runs silently;
+  `--mute` turns it off.
+
+The rules live in `game/game.odin` (no SDL), the beeps in `src/audio.odin`.
+See [architecture](docs/architecture.md#sound-srcaudioodin) for how the two
+are connected.
+
 ## Starting a game
 
 Replace `game/game.odin` (and its tests) with your own simulation. Keep it free
 of SDL: feed it `Step_Input` and a fixed `dt`, render from its state in
-`src/render.odin`, and add key bindings in `src/input.odin`.
+`src/render.odin`, and add key bindings in `src/input.odin`. To trigger sounds,
+expose counters or events from the game and play them in `app_iterate`, as the
+bounce counters do; delete `src/audio.odin` if you don't need sound.
 
 ## Optional examples
 
