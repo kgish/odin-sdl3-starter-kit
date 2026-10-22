@@ -33,6 +33,20 @@ scripts/test.ps1
 scripts/package.ps1
 ```
 
+## Running the game
+
+After bootstrapping, from the project root:
+
+```sh
+./scripts/build.sh && ./build/starter-debug         # rebuild and run (debug)
+./scripts/build.sh release && ./build/starter       # optimized build
+```
+
+On Windows: `scripts/build.ps1 debug; build/starter-debug.exe`. The game finds
+its assets next to the executable, so it runs from any directory. Add options
+such as `--mute` or `--tuning` ([all options](#command-line-options)). In game:
+Enter plays, P pauses, arrows/WASD move, F1 toggles the tuning panel, Esc quits.
+
 ## Layout
 
 | Path | Contents |
