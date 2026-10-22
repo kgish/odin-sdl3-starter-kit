@@ -12,9 +12,9 @@ APP_IDENTIFIER :: "org.example.odin-sdl3-starter"
 
 // Everything the application owns. Allocated in app_init, freed in app_quit.
 //
-// Ownership: `window`, `renderer`, the baked fonts, `audio`, `ui` and
-// `background` are created in app_init and destroyed only in app_quit
-// (background, ui, fonts, audio, renderer, then window). SDL itself is shut down by SDL after app_quit
+// Ownership: `window`, `renderer`, the baked fonts, `audio`, `ui`,
+// `background` and `ball_sprite` are created in app_init and destroyed only in
+// app_quit (ball sprite, background, ui, fonts, audio, renderer, then window). SDL itself is shut down by SDL after app_quit
 // returns, so there is no SDL_Quit call here.
 App_State :: struct {
 	cfg:       Config,
@@ -26,6 +26,8 @@ App_State :: struct {
 	score_font: Baked_Font, // Jersey 10
 	menu_font:  Baked_Font, // Silkscreen
 	background: Background,
+	// Optional: nil when the image is missing; render then draws a square.
+	ball_sprite: ^sdl.Texture,
 	// Game hit counters already answered with a sound.
 	bounces_heard:     u64,
 	paddle_hits_heard: u64,
@@ -116,6 +118,7 @@ app_init :: proc(appstate: ^rawptr, argv: []cstring) -> sdl.AppResult {
 	}
 	state.background = background_make()
 	background_load(&state.background, state.renderer, state.asset_dir)
+	state.ball_sprite = ball_sprite_load(state.renderer, state.asset_dir)
 	state.game = game.game_make(cfg.seed)
 	state.timestep = game.timestep_make(cfg.sim_hz, i64(cfg.max_elapsed_ms) * 1_000_000, cfg.max_updates)
 	if injected_failure(state, .Game) do return .FAILURE
@@ -215,6 +218,7 @@ app_quit :: proc(state: ^App_State, result: sdl.AppResult) {
 	if state == nil {
 		return
 	}
+	ball_sprite_destroy(&state.ball_sprite)
 	background_destroy(&state.background)
 	ui_destroy(&state.ui)
 	baked_font_destroy(&state.menu_font)
