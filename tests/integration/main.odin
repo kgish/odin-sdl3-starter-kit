@@ -38,18 +38,18 @@ Case :: struct {
 }
 
 // What app_quit destroyed, by the last init stage that created something.
-DESTROYED_ALL :: []Count{{"destroyed ball sprite", 1}, {"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_TO_AUDIO :: []Count{{"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_BOTH :: []Count{{"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_WINDOW :: []Count{{"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
-DESTROYED_NONE :: []Count{{"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
-DESTROYED_NO_IMAGES :: []Count{{"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
-DESTROYED_MUTED :: []Count{{"destroyed ball sprite", 1}, {"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_ALL :: []Count{{"destroyed paddle sprite", 1}, {"destroyed ball sprite", 1}, {"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_TO_AUDIO :: []Count{{"destroyed paddle sprite", 0}, {"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_BOTH :: []Count{{"destroyed paddle sprite", 0}, {"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_WINDOW :: []Count{{"destroyed paddle sprite", 0}, {"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 1}}
+DESTROYED_NONE :: []Count{{"destroyed paddle sprite", 0}, {"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 0}, {"destroyed menu atlas", 0}, {"destroyed score atlas", 0}, {"destroyed audio stream", 0}, {"destroyed renderer", 0}, {"destroyed window", 0}}
+DESTROYED_NO_IMAGES :: []Count{{"destroyed paddle sprite", 0}, {"destroyed ball sprite", 0}, {"destroyed background", 0}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 1}, {"destroyed renderer", 1}, {"destroyed window", 1}}
+DESTROYED_MUTED :: []Count{{"destroyed paddle sprite", 1}, {"destroyed ball sprite", 1}, {"destroyed background", 1}, {"destroyed ui atlas", 1}, {"destroyed menu atlas", 1}, {"destroyed score atlas", 1}, {"destroyed audio stream", 0}, {"destroyed renderer", 1}, {"destroyed window", 1}}
 
 STARTER_CASES := []Case{
 	{
 		"smoke", {"--frames=60"},
-		{0, {"initialized", "loaded background 512x288", "loaded ball sprite 64x64", "audio driver: dummy", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
+		{0, {"initialized", "loaded background 512x288", "loaded ball sprite 64x64", "loaded paddle sprite 64x64", "audio driver: dummy", "smoke run complete after 60 frames", "quit: SUCCESS"}, nil, DESTROYED_ALL},
 	},
 	{
 		"smoke-no-vsync", {"--frames=30", "--no-vsync"},
@@ -69,7 +69,7 @@ STARTER_CASES := []Case{
 	},
 	{
 		"missing-assets", {"--frames=5", "--assets=__missing_asset_dir__"},
-		{0, {"asset directory not found: __missing_asset_dir__", "background not loaded", "ball sprite not loaded", "smoke run complete", "quit: SUCCESS"}, nil, DESTROYED_NO_IMAGES},
+		{0, {"asset directory not found: __missing_asset_dir__", "background not loaded", "ball sprite not loaded", "paddle sprite not loaded", "smoke run complete", "quit: SUCCESS"}, nil, DESTROYED_NO_IMAGES},
 	},
 	{
 		"bad-option", {"--definitely-not-an-option"},

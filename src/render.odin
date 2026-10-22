@@ -16,14 +16,8 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	sdl.RenderClear(r) or_return
 	background_draw(state.background, r) or_return
 
-	sdl.SetRenderDrawColor(r, 90, 200, 140, 255) or_return
-	draw_body(r, g.player, alpha) or_return
-	if state.ball_sprite != nil {
-		draw_sprite(r, state.ball_sprite, g.ball, alpha) or_return
-	} else {
-		sdl.SetRenderDrawColor(r, 240, 190, 80, 255) or_return
-		draw_body(r, g.ball, alpha) or_return
-	}
+	draw_body(r, g.player, state.paddle_sprite, {90, 200, 140}, alpha) or_return
+	draw_body(r, g.ball, state.ball_sprite, {240, 190, 80}, alpha) or_return
 
 	sdl.SetRenderDrawColor(r, 230, 230, 230, 255) or_return
 	switch g.state {
@@ -48,24 +42,18 @@ render :: proc(state: ^App_State, alpha: f32) -> bool {
 	return sdl.RenderPresent(r)
 }
 
+// Draws `sprite` stretched over the body's square, or the square filled with
+// `fallback` when the sprite did not load.
 @(private = "file")
-draw_body :: proc(r: ^sdl.Renderer, body: game.Body, alpha: f32) -> bool {
-	rect := body_rect(body, alpha)
-	return sdl.RenderFillRect(r, &rect)
-}
-
-// Draws `texture` stretched over the body's square.
-@(private = "file")
-draw_sprite :: proc(r: ^sdl.Renderer, texture: ^sdl.Texture, body: game.Body, alpha: f32) -> bool {
-	rect := body_rect(body, alpha)
-	return sdl.RenderTexture(r, texture, nil, &rect)
-}
-
-@(private = "file")
-body_rect :: proc(body: game.Body, alpha: f32) -> sdl.FRect {
+draw_body :: proc(r: ^sdl.Renderer, body: game.Body, sprite: ^sdl.Texture, fallback: [3]u8, alpha: f32) -> bool {
 	pos := game.body_render_pos(body, alpha)
 	half := body.size / 2
-	return {pos.x - half, pos.y - half, body.size, body.size}
+	rect := sdl.FRect{pos.x - half, pos.y - half, body.size, body.size}
+	if sprite != nil {
+		return sdl.RenderTexture(r, sprite, nil, &rect)
+	}
+	sdl.SetRenderDrawColor(r, fallback.r, fallback.g, fallback.b, 255) or_return
+	return sdl.RenderFillRect(r, &rect)
 }
 
 // Draws `text` in a baked pixel font, horizontally centered, with its top at `y`.

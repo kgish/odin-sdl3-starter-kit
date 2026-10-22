@@ -5,10 +5,10 @@ never the working directory. `scripts/build.*` and `scripts/package.*` copy it
 next to the built executable. Override during development with
 `--assets=<dir>`.
 
-The baseline starter loads only `backgrounds/blue-nebula.bmp` and
-`sprites/ball.bmp` (BMP, so core SDL can read them without SDL_image). Both are
-optional: if a file is missing the game logs a warning and draws the plain
-clear color or a plain square ball. The score is drawn in
+The baseline starter loads only `backgrounds/blue-nebula.bmp`,
+`sprites/ball.bmp` and `sprites/paddle.bmp` (BMP, so core SDL can read them
+without SDL_image). All are optional: if a file is missing the game logs a
+warning and draws the plain clear color or a plain square. The score is drawn in
 Jersey 10 and the menu and tuning panel in Silkscreen, but the starter reads neither `.ttf` at
 run time: `scripts/bake-fonts.sh` bakes their glyphs into `src/score_font.odin`
 and `src/menu_font.odin`. Press Start 2P and `images/` are used by the
@@ -30,6 +30,7 @@ modifications. Ship the license texts with the packaged game.
 | `fonts/Silkscreen-OFL.txt` | same commit (`OFL.txt`, SHA-256 `86c5e9c9…fbd3`) | — | License text for Silkscreen |
 | `backgrounds/blue-nebula.bmp` | [Seamless Space Backgrounds](https://opengameart.org/content/seamless-space-backgrounds), small 512×512 pack (`sbs_-_seamless_space_backgrounds_-_small_512x512_0.zip`, SHA-256 `401a73e2…59e0ab`), file `Blue Nebula 4 - 512x512.png` (SHA-256 `006cc7c8…9bce21`). Cropped to the vertically centered 512×288 band (16:9) and converted to 24-bit BMP. Brightness adjustable at runtime (`BACKGROUND_BRIGHTNESS` in `src/background.odin`, default 100 %, and the tuning panel) | Screaming Brain Studios | CC0 1.0 (public domain); no credit required |
 | `sprites/ball.bmp` | Rendered for this project with a short script: a 64×64 shaded gold sphere (straight alpha, 32-bit BMP with a `BITMAPV4HEADER`), anti-aliased edge | Odin SDL3 Starter Kit contributors | MIT, same as the project |
+| `sprites/paddle.bmp` | Rendered for this project with a short script: a 64×64 green rounded block with a bevel lit from the top left (straight alpha, 32-bit BMP with a `BITMAPV4HEADER`) | Odin SDL3 Starter Kit contributors | MIT, same as the project |
 | `images/slime.png` | Drawn for this project (16×16 RGBA) | Odin SDL3 Starter Kit contributors | MIT, same as the project |
 
 `scripts/package.*` always copies `fonts/Jersey10-OFL.txt` and
